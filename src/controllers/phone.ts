@@ -1,3 +1,11 @@
+
+import { Request, Response } from "express";
+import * as phoneService from "../services/phone.js";
+import { ApiResponse } from "../utils/api-response.js";
+import mongoose from "mongoose";
+import { StatusCode } from "../utils/status-codes.js";
+import { PhoneModel } from "../models/phone.js";
+
 // Get current shopify_session_id for frontend
 export const getCurrentShopifySessionId = async (
   req: Request,
@@ -31,11 +39,6 @@ export const getCurrentShopifySessionId = async (
     });
   }
 };
-import { Request, Response } from "express";
-import * as phoneService from "../services/phone.js";
-import { ApiResponse } from "../utils/api-response.js";
-import mongoose from "mongoose";
-import { StatusCode } from "../utils/status-codes.js";
 
 // Create
 export const createNewWhatsAppPhone = async (req: Request, res: Response) => {
@@ -51,6 +54,12 @@ export const createNewWhatsAppPhone = async (req: Request, res: Response) => {
             "Phone number, country code, and shopify_session_id are required"
           )
         );
+    }
+
+    const existingNumber = await PhoneModel.findOne({ phone_number });
+
+    if (existingNumber) {
+      return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Phone number already exist"))
     }
 
     const newPhone = await phoneService.createPhone({
