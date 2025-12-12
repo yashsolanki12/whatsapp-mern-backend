@@ -12,58 +12,34 @@ const app = express();
 // Load environment variables
 dotenv.config({ path: ".env" });
 
-// CORS configuration
-const allowedOrigins = [
-  "https://admin.shopify.com",
-  "https://example.com/api/auth",
-  /.*\.myshopify\.com$/,
-  "https://unstimulating-semistiff-thuy.ngrok-free.dev",
-  "https://graphics-controlling-cant-cotton.trycloudflare.com",
-  /^http:\/\/localhost:\d+$/,
-];
-
 // Middleware
 app.use(cookieParser());
-
-// app.use(cors());
 app.use(express.json());
 
-// CORS middleware
+// Dynamic CORS middleware for dev and preview environments
+const allowedOriginPatterns = [
+  /.*\.myshopify\.com$/,
+  /.*\.ngrok-free\.dev$/,
+  /.*\.trycloudflare\.com$/,
+  /^https:\/\/admin\.shopify\.com$/,
+  /^http:\/\/localhost:\d+$/
+];
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-
-  // Check if the origin is allowed
-  const isAllowed = allowedOrigins.some((allowedOrigin) => {
-    if (typeof allowedOrigin === "string") {
-      return allowedOrigin === origin;
-    } else if (allowedOrigin instanceof RegExp) {
-      return typeof origin === "string" ? allowedOrigin.test(origin) : false;
-    }
-    return false;
-  });
-
+  const isAllowed = allowedOriginPatterns.some((pattern) =>
+    typeof pattern === "string" ? pattern === origin : pattern.test(origin || "")
+  );
   if (isAllowed || !origin) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-    );
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, Authorization, X-Requested-With, X-Shopify-Access-Token, X-Shopify-Shop-Domain, X-Shopify-API-Version, X-Shopify-Hmac-SHA256, ngrok-skip-browser-warning"
     );
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Expose-Headers",
-      "Content-Range, X-Total-Count"
-    );
+    res.setHeader("Access-Control-Expose-Headers", "Content-Range, X-Total-Count");
   }
-
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
+  if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });
 
