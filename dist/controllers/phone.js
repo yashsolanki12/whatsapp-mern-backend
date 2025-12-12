@@ -1,0 +1,181 @@
+import * as phoneService from "../services/phone.js";
+import { ApiResponse } from "../utils/api-response.js";
+import mongoose from "mongoose";
+import { StatusCode } from "../utils/status-codes.js";
+import { PhoneModel } from "../models/phone.js";
+// Get current shopify_session_id for frontend
+export const getCurrentShopifySessionId = async (req, res) => {
+    try {
+        const shopDomain = req.headers["x-shopify-shop-domain"];
+        if (!shopDomain) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing shop domain header",
+                sessionId: null,
+            });
+        }
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop: shopDomain });
+        if (!sessionDoc || !sessionDoc._id) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Session not found", session: null });
+        }
+        if (sessionDoc) {
+            return res.json({ success: true, session: sessionDoc });
+        }
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            sessionId: null,
+        });
+    }
+};
+// Create
+export const createNewWhatsAppPhone = async (req, res) => {
+    try {
+        const { phone_number, country_code, shopify_session_id } = req.body;
+        if (!phone_number || !country_code || !shopify_session_id) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Phone number, country code, and shopify_session_id are required"));
+        }
+        const existingNumber = await PhoneModel.findOne({ phone_number });
+        if (existingNumber) {
+            return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Phone number already exist"));
+        }
+        const newPhone = await phoneService.createPhone({
+            phone_number,
+            country_code,
+            shopify_session_id,
+        });
+        if (!newPhone) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Failed to create new phone"));
+        }
+        return res
+            .status(StatusCode.CREATED)
+            .json(new ApiResponse(true, "Phone created successfully", newPhone));
+    }
+    catch (error) {
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
+// List
+export const getAllWhatsAppPhone = async (_req, res) => {
+    try {
+        const phones = await phoneService.getAllPhone();
+        if (!phones || phones.length === 0) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "No phones found"));
+        }
+        if (phones) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "Phone retrieved successfully", phones));
+        }
+    }
+    catch (error) {
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
+// Detail
+export const getWhatsAppPhoneById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Invalid phone id format"));
+        }
+        const phone = await phoneService.getPhoneById(id);
+        if (!phone) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "Phone not found"));
+        }
+        if (phone) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "Phone retrieved successfully", phone));
+        }
+    }
+    catch (error) {
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
+// Update
+export const updateWhatsAppPhoneById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { phone_number, country_code } = req.body;
+        if (!phone_number || !country_code) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Phone number and country code are required"));
+        }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Invalid phone id format"));
+        }
+        const updatedPhone = await phoneService.updatePhone(id, {
+            phone_number,
+            country_code,
+        });
+        if (!updatedPhone) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "Phone not found"));
+        }
+        if (updatedPhone) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "Phone updated successfully", updatedPhone));
+        }
+    }
+    catch (error) {
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
+// Delete
+export const deleteWhatsAppPhoneById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Invalid phone id format"));
+        }
+        const deletedPhone = await phoneService.deletePhoneById(id);
+        if (!deletedPhone) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "Phone not found"));
+        }
+        if (deletedPhone) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "Phone deleted successfully", deletedPhone));
+        }
+    }
+    catch (error) {
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
+//# sourceMappingURL=phone.js.map
