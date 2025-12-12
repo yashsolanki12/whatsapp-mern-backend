@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -18,11 +18,22 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "allowJs": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "middlewares",
+    "models",
+    "routes",
+    "services",
+    "types",
+    "utils",
+    "validations",
+    "app.ts",
+    "index.ts",
+    "config",
+    "controllers"
+  ],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true,

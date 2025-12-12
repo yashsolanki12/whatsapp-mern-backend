@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 // import cors from "cors";
 import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
-import phoneRoutes from "../src/routes/phone.routes.js";
+import phoneRoutes from "./routes/phone.routes.js";
 import cookieParser from "cookie-parser";
 
 // Initialize express app

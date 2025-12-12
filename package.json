@@ -15,7 +15,7 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon --exec node --loader ts-node/esm src/index.ts",
+    "dev": "nodemon --exec node --loader ts-node/esm index.ts",
     "build": "tsc",
     "prestart": "npm run build",
     "serve": "node dist/index.js"
