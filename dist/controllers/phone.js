@@ -1,3 +1,45 @@
+import ShopifySession from "../models/shopify-sessions.js";
+// Handle GET, POST, DELETE for /api/phone/offline_{shop}
+export const handleOfflineSession = async (req, res) => {
+    const shopParam = req.params.shop;
+    const shop = shopParam?.replace(/^offline_/, "");
+    if (!shop) {
+        return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Missing shop domain in URL"));
+    }
+    try {
+        if (req.method === "GET") {
+            // Find session by shop domain
+            const session = await ShopifySession.findOne({ shop });
+            if (!session) {
+                return res.status(StatusCode.NOT_FOUND).json(new ApiResponse(false, "Session not found"));
+            }
+            return res.status(StatusCode.OK).json(session);
+        }
+        else if (req.method === "POST") {
+            // Upsert session by shop domain
+            const data = req.body;
+            if (!data || !data.id || !data.shop) {
+                return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Missing session data (id, shop)"));
+            }
+            const updated = await ShopifySession.findOneAndUpdate({ shop: data.shop }, { $set: data }, { upsert: true, new: true });
+            return res.status(StatusCode.OK).json(updated);
+        }
+        else if (req.method === "DELETE") {
+            // Delete session by shop domain
+            const deleted = await ShopifySession.findOneAndDelete({ shop });
+            if (!deleted) {
+                return res.status(StatusCode.NOT_FOUND).json(new ApiResponse(false, "Session not found to delete"));
+            }
+            return res.status(StatusCode.OK).json(new ApiResponse(true, "Session deleted", deleted));
+        }
+        else {
+            return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Unsupported method"));
+        }
+    }
+    catch (error) {
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json(new ApiResponse(false, "Internal server error"));
+    }
+};
 import * as phoneService from "../services/phone.js";
 import { ApiResponse } from "../utils/api-response.js";
 import mongoose from "mongoose";

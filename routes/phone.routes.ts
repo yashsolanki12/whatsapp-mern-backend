@@ -28,6 +28,14 @@ router.put("/:id", validate(phoneSchema), updateWhatsAppPhoneById);
 // delete phone by id
 router.delete("/:id", deleteWhatsAppPhoneById);
 
+
+// Shopify session storage endpoints for offline_{shop}
+import { handleOfflineSession } from "../controllers/phone.js";
+router.route("/offline_:shop")
+  .get(handleOfflineSession)
+  .post(handleOfflineSession)
+  .delete(handleOfflineSession);
+
 // get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
 
