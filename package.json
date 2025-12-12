@@ -19,6 +19,7 @@
     "build": "tsc",
     "prestart": "npm run build",
     "serve": "node dist/index.js"
+    
   },
   "keywords": [],
   "author": "",
