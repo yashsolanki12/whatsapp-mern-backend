@@ -2,7 +2,7 @@
   "name": "shopify-app-whatsapp-mern",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -14,10 +14,10 @@
     "typescript": "^5.4.0"
   },
   "scripts": {
-    "dev": "nodemon --exec node --loader ts-node/esm src/server.ts",
-    "start": "node --loader ts-node/esm src/server.ts",
+    "dev": "nodemon --exec node --loader ts-node/esm src/index.ts",
+    "start": "node --loader ts-node/esm src/index.ts",
     "build": "tsc",
-    "serve": "node dist/server.js"
+    "serve": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

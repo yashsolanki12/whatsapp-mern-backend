@@ -15,9 +15,10 @@ dotenv.config({ path: ".env" });
 // CORS configuration
 const allowedOrigins = [
   "https://admin.shopify.com",
+  "https://example.com/api/auth",
   /.*\.myshopify\.com$/,
   "https://unstimulating-semistiff-thuy.ngrok-free.dev",
-  "https://world-alternatives-marshall-sellers.trycloudflare.com",
+  "https://graphics-controlling-cant-cotton.trycloudflare.com",
   /^http:\/\/localhost:\d+$/,
 ];
 
