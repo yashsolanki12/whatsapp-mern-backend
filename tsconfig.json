@@ -9,31 +9,17 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "resolveJsonModule": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,
     "sourceMap": true,
     "allowJs": true,
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
-  "include": [
-    "src/**/*",
-    "middlewares",
-    "models",
-    "routes",
-    "services",
-    "types",
-    "utils",
-    "validations",
-    "app.ts",
-    "index.ts",
-    "config",
-    "controllers"
-  ],
+  "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true,
