@@ -1,3 +1,4 @@
+
 import express from "express";
 import dotenv from "dotenv";
 // import cors from "cors";
@@ -6,6 +7,10 @@ import { errorHandler } from "./middlewares/error-handler.js";
 import phoneRoutes from "./routes/phone.routes.js";
 import cookieParser from "cookie-parser";
 import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
+
+// Serve static files from the React app build
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Initialize express app
 const app = express();
@@ -61,6 +66,17 @@ app.get("/", (_req, res) => {
 app.use("/api/phone", phoneRoutes);
 // Routes for Shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "../web/build")));
+
+// Serve React app for all non-API routes
+app.get("*", (req, res) => {
+  if (req.originalUrl.startsWith("/api/"))
+    return res.status(404).json({ error: "Not Found" });
+  res.sendFile(path.join(__dirname, ""));
+});
 
 // Global Error Handler
 app.use(errorHandler);
