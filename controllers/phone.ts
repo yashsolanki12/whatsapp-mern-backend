@@ -15,29 +15,25 @@ export const getCurrentShopifySessionId = async (
   try {
     const shopDomain = req.headers["x-shopify-shop-domain"] as string;
     if (!shopDomain) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing shop domain header",
-        sessionId: null,
-      });
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Missing shop domain header"));
     }
     const sessionDoc = await mongoose.connection
       .collection("shopify_sessions")
       .findOne({ shop: shopDomain });
     if (!sessionDoc || !sessionDoc._id) {
       return res
-        .status(404)
-        .json({ success: false, message: "Session not found", session: null });
+        .status(StatusCode.NOT_FOUND)
+        .json(new ApiResponse(false, "Session not found"));
     }
     if (sessionDoc) {
       return res.json({ success: true, session: sessionDoc });
     }
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      sessionId: null,
-    });
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
   }
 };
 
@@ -107,36 +103,6 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
   }
 };
 
-// Detail
-export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid phone id format"));
-    }
-
-    const phone = await phoneService.getPhoneById(id);
-
-    if (!phone) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Phone not found"));
-    }
-    if (phone) {
-      return res
-        .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Phone retrieved successfully", phone));
-    }
-  } catch (error) {
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
-
 // Update
 export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
   try {
@@ -170,6 +136,36 @@ export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
         .json(
           new ApiResponse(true, "Phone updated successfully", updatedPhone)
         );
+    }
+  } catch (error) {
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
+  }
+};
+
+// Detail
+export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Invalid phone id format"));
+    }
+
+    const phone = await phoneService.getPhoneById(id);
+
+    if (!phone) {
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json(new ApiResponse(false, "Phone not found"));
+    }
+    if (phone) {
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Phone retrieved successfully", phone));
     }
   } catch (error) {
     return res

@@ -22,22 +22,30 @@ const allowedOriginPatterns = [
   /.*\.ngrok-free\.dev$/,
   /.*\.trycloudflare\.com$/,
   /^https:\/\/admin\.shopify\.com$/,
-  /^http:\/\/localhost:\d+$/
+  /^http:\/\/localhost:\d+$/,
 ];
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const isAllowed = allowedOriginPatterns.some((pattern) =>
-    typeof pattern === "string" ? pattern === origin : pattern.test(origin || "")
+    typeof pattern === "string"
+      ? pattern === origin
+      : pattern.test(origin || "")
   );
   if (isAllowed || !origin) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+    );
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, Authorization, X-Requested-With, X-Shopify-Access-Token, X-Shopify-Shop-Domain, X-Shopify-API-Version, X-Shopify-Hmac-SHA256, ngrok-skip-browser-warning"
     );
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Expose-Headers", "Content-Range, X-Total-Count");
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Content-Range, X-Total-Count"
+    );
   }
   if (req.method === "OPTIONS") return res.status(204).end();
   next();

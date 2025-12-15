@@ -18,11 +18,13 @@ const allowedOriginPatterns = [
     /.*\.ngrok-free\.dev$/,
     /.*\.trycloudflare\.com$/,
     /^https:\/\/admin\.shopify\.com$/,
-    /^http:\/\/localhost:\d+$/
+    /^http:\/\/localhost:\d+$/,
 ];
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    const isAllowed = allowedOriginPatterns.some((pattern) => typeof pattern === "string" ? pattern === origin : pattern.test(origin || ""));
+    const isAllowed = allowedOriginPatterns.some((pattern) => typeof pattern === "string"
+        ? pattern === origin
+        : pattern.test(origin || ""));
     if (isAllowed || !origin) {
         res.setHeader("Access-Control-Allow-Origin", origin || "*");
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
