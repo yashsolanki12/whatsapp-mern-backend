@@ -55,7 +55,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "../web/build")));
 // Serve React app for all non-API routes
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
     if (req.originalUrl.startsWith("/api/"))
         return res.status(StatusCode.NotFound).json({ error: "Not Found" });
     res.sendFile(path.join(__dirname, "../web/build/index.html"));
@@ -73,7 +73,9 @@ app.get("/api/health", (_req, res) => {
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {
     console.log(`404 - Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(StatusCode.NotFound).json({ error: "Not Found", path: req.originalUrl });
+    res
+        .status(StatusCode.NotFound)
+        .json({ error: "Not Found", path: req.originalUrl });
 });
 // Error handling middleware - This must be after all other middleware
 app.use((err, _req, res, _next) => {
