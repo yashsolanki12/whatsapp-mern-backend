@@ -55,10 +55,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "../web/build")));
 // Serve React app for all non-API routes
-app.get("/*", (req, res) => {
+app.get("*", (req, res) => {
     if (req.originalUrl.startsWith("/api/"))
         return res.status(StatusCode.NotFound).json({ error: "Not Found" });
-    res.sendFile(path.join(__dirname, "../web/build/index.html"));
+    res.sendFile(path.join(__dirname, ""));
 });
 // Global Error Handler
 app.use(errorHandler);
