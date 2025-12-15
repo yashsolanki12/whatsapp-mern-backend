@@ -4,12 +4,8 @@ import dotenv from "dotenv";
 // import cors from "cors";
 import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
-import phoneRoutes from "./routes/phone.routes.js";
 import cookieParser from "cookie-parser";
-import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 // Serve static files from the React app build
-import path from "path";
-import { fileURLToPath } from "url";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 // Initialize express app
@@ -47,19 +43,19 @@ app.use((req, res, next) => {
 app.get("/", (_req, res) => {
     res.json({ message: "Server is running 🚀" });
 });
-// Routes for phone
-app.use("/api/phone", phoneRoutes);
-// Routes for Shopify authentication
-app.use("/api/shopify", shopifyAuthRoutes);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "../web/build")));
-// Serve React app for all non-API routes
-app.get("*", (req, res) => {
-    if (req.originalUrl.startsWith("/api/"))
-        return res.status(StatusCode.NotFound).json({ error: "Not Found" });
-    res.sendFile(path.join(__dirname, ""));
-});
+// // Routes for phone
+// app.use("/api/phone", phoneRoutes);
+// // Routes for Shopify authentication
+// app.use("/api/shopify", shopifyAuthRoutes);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// app.use(express.static(path.join(__dirname, "../web/build")));
+// // Serve React app for all non-API routes
+// app.get("*", (req, res) => {
+//   if (req.originalUrl.startsWith("/api/"))
+//     return res.status(StatusCode.NotFound).json({ error: "Not Found" });
+//   res.sendFile(path.join(__dirname, ""));
+// });
 // Global Error Handler
 app.use(errorHandler);
 // Health check endpoint

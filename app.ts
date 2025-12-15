@@ -5,13 +5,10 @@ import dotenv from "dotenv";
 // import cors from "cors";
 import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
-import phoneRoutes from "./routes/phone.routes.js";
 import cookieParser from "cookie-parser";
-import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 
 // Serve static files from the React app build
-import path from "path";
-import { fileURLToPath } from "url";
+
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 
