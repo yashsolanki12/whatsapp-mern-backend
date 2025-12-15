@@ -5,6 +5,7 @@ import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import phoneRoutes from "./routes/phone.routes.js";
 import cookieParser from "cookie-parser";
+import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 
 // Initialize express app
 const app = express();
@@ -58,6 +59,8 @@ app.get("/", (_req, res) => {
 
 // Routes for phone
 app.use("/api/phone", phoneRoutes);
+// Routes for Shopify authentication
+app.use("/api/shopify", shopifyAuthRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
