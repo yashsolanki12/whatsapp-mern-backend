@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import express from "express";
 import dotenv from "dotenv";
 // import cors from "cors";
@@ -9,6 +10,8 @@ import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 // Serve static files from the React app build
 import path from "path";
 import { fileURLToPath } from "url";
+import { ApiResponse } from "./utils/api-response.js";
+import { StatusCode } from "@shopify/shopify-api";
 // Initialize express app
 const app = express();
 // Load environment variables
@@ -54,14 +57,14 @@ app.use(express.static(path.join(__dirname, "../web/build")));
 // Serve React app for all non-API routes
 app.get("*", (req, res) => {
     if (req.originalUrl.startsWith("/api/"))
-        return res.status(404).json({ error: "Not Found" });
-    res.sendFile(path.join(__dirname, ""));
+        return res.status(StatusCode.NotFound).json({ error: "Not Found" });
+    res.sendFile(path.join(__dirname, "../web/build/index.html"));
 });
 // Global Error Handler
 app.use(errorHandler);
 // Health check endpoint
 app.get("/api/health", (_req, res) => {
-    res.status(200).json({
+    res.status(StatusCode.Ok).json({
         status: "ok",
         timestamp: new Date().toISOString(),
         database: "connected",
@@ -70,16 +73,49 @@ app.get("/api/health", (_req, res) => {
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {
     console.log(`404 - Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: "Not Found", path: req.originalUrl });
+    res.status(StatusCode.NotFound).json({ error: "Not Found", path: req.originalUrl });
 });
 // Error handling middleware - This must be after all other middleware
 app.use((err, _req, res, _next) => {
     console.error("Error:", err.message);
-    res.status(500).json({
+    res.status(StatusCode.InternalServerError).json({
         error: "Internal Server Error",
         message: err.message,
         stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
+});
+// Shopify Webhook Handler (direct route, no controller/router)
+app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req, res) => {
+    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
+    const secret = process.env.SHOPIFY_API_SECRET;
+    if (!secret) {
+        return res
+            .status(StatusCode.Unauthorized)
+            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+    }
+    const body = req.body;
+    const digest = crypto
+        .createHmac("sha256", secret)
+        .update(body, "utf8")
+        .digest("base64");
+    if (digest !== hmacHeader) {
+        return res
+            .status(StatusCode.Unauthorized)
+            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+    }
+    // Parse the webhook payload
+    let payload;
+    try {
+        payload = JSON.parse(body.toString());
+    }
+    catch (e) {
+        return res
+            .status(StatusCode.BadRequest)
+            .json(new ApiResponse(false, "Invalid JSON"));
+    }
+    // Handle the webhook event here
+    console.log("Received webhook:", req.headers["x-shopify-topic"], payload);
+    res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
 });
 // Database connection
 const mongoDbUrl = process.env.MONGODB_URL;
