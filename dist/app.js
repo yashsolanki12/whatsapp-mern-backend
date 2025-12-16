@@ -8,6 +8,8 @@ import cookieParser from "cookie-parser";
 // Serve static files from the React app build
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
+import phoneRoutes from "./routes/phone.routes.js";
+import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 // Initialize express app
 const app = express();
 // Load environment variables
@@ -44,9 +46,9 @@ app.get("/", (_req, res) => {
     res.json({ message: "Server is running 🚀" });
 });
 // // Routes for phone
-// app.use("/api/phone", phoneRoutes);
-// // Routes for Shopify authentication
-// app.use("/api/shopify", shopifyAuthRoutes);
+app.use("/api/phone", phoneRoutes);
+// Routes for Shopify authentication
+app.use("/api/shopify", shopifyAuthRoutes);
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 // app.use(express.static(path.join(__dirname, "../web/build")));

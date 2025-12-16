@@ -11,6 +11,8 @@ import cookieParser from "cookie-parser";
 
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
+import phoneRoutes from "./routes/phone.routes.js"
+import shopifyAuthRoutes from "./routes/shopify-auth.routes.js"
 
 // Initialize express app
 const app = express();
@@ -63,9 +65,9 @@ app.get("/", (_req, res) => {
 });
 
 // // Routes for phone
-// app.use("/api/phone", phoneRoutes);
-// // Routes for Shopify authentication
-// app.use("/api/shopify", shopifyAuthRoutes);
+app.use("/api/phone", phoneRoutes);
+// Routes for Shopify authentication
+app.use("/api/shopify", shopifyAuthRoutes);
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
