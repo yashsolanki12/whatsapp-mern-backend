@@ -11,6 +11,9 @@ import {
 import { validate } from "../middlewares/validate.js";
 import { phoneSchema } from "../validations/phone.js";
 import { handleOfflineSession } from "../controllers/phone.js";
+
+// Shopify session storage endpoints for /api/phone/:id (for session id, not phone id)
+import { handleSessionById } from "../controllers/phone.js";
 const router = Router();
 
 // create new phone
@@ -28,13 +31,21 @@ router
   .delete(handleOfflineSession);
 
 // get phone by id
-router.get("/:id", getWhatsAppPhoneById);
+
+router
+  .route("/:id")
+  .get(handleSessionById)
+  .post(handleSessionById)
+  .delete(handleSessionById);
+
+// get phone by id (only if id is a valid ObjectId)
+router.get("/phone/:id", getWhatsAppPhoneById);
 
 // update phone by id
-router.put("/:id", validate(phoneSchema), updateWhatsAppPhoneById);
+router.put("/phone/:id", validate(phoneSchema), updateWhatsAppPhoneById);
 
 // delete phone by id
-router.delete("/:id", deleteWhatsAppPhoneById);
+router.delete("/phone/:id", deleteWhatsAppPhoneById);
 
 // get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
