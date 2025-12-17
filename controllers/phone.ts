@@ -19,6 +19,7 @@ export const getCurrentShopifySessionId = async (
         .status(StatusCode.BAD_REQUEST)
         .json(new ApiResponse(false, "Missing shop domain header"));
     }
+
     const sessionDoc = await mongoose.connection
       .collection("shopify_sessions")
       .findOne({ shop: shopDomain });
