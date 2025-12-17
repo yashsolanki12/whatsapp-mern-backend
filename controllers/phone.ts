@@ -145,7 +145,10 @@ export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
 };
 
 // Detail
-export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
+export const getWhatsAppPhoneById = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const { id } = req.params;
 
@@ -175,9 +178,13 @@ export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
 };
 
 // Delete
-export const deleteWhatsAppPhoneById = async (req: Request, res: Response) => {
+export const deleteWhatsAppPhoneById = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const { id } = req.params;
+    console.log("id", id);
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
@@ -262,7 +269,10 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
 };
 
 // Handle GET, POST, DELETE for /api/phone/:id (Shopify session storage)
-export const handleSessionById = async (req: Request, res: Response) => {
+export const handleSessionById = async (
+  req: Request,
+  res: Response,
+) => {
   const id = req.params.id;
   // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
   if (mongoose.Types.ObjectId.isValid(id)) {

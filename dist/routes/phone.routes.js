@@ -17,17 +17,19 @@ router
     .post(handleOfflineSession)
     .delete(handleOfflineSession);
 // get phone by id
+// Shopify session storage endpoint
+// /session
 router
-    .route("/:id")
+    .route("/session/:id")
     .get(handleSessionById)
     .post(handleSessionById)
     .delete(handleSessionById);
 // get phone by id (only if id is a valid ObjectId)
-router.get("/phone/:id", getWhatsAppPhoneById);
+router.get("/:id", getWhatsAppPhoneById);
 // update phone by id
-router.put("/phone/:id", validate(phoneSchema), updateWhatsAppPhoneById);
+router.put("/:id", validate(phoneSchema), updateWhatsAppPhoneById);
 // delete phone by id
-router.delete("/phone/:id", deleteWhatsAppPhoneById);
+router.delete("/:id", deleteWhatsAppPhoneById);
 // get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
 export default router;
