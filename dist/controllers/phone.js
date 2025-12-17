@@ -154,6 +154,7 @@ export const getWhatsAppPhoneById = async (req, res) => {
 export const deleteWhatsAppPhoneById = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log("id", id);
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
