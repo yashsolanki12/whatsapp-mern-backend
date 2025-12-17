@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import express from "express";
 import dotenv from "dotenv";
-// import cors from "cors";
+import cors from "cors";
 import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import cookieParser from "cookie-parser";
@@ -10,6 +10,7 @@ import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 import phoneRoutes from "./routes/phone.routes.js";
 import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
+import { allowedOrigin } from "./utils/helper.js";
 // Initialize express app
 const app = express();
 // Load environment variables
@@ -17,6 +18,17 @@ dotenv.config({ path: ".env" });
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigin.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'), false);
+        }
+    },
+    credentials: true
+}));
 // Dynamic CORS middleware for dev and preview environments
 const allowedOriginPatterns = [
     /.*\.myshopify\.com$/,

@@ -1,0 +1,1 @@
+export const allowedOrigin = ["https://shopify-app-with-mern.onrender.com"];
