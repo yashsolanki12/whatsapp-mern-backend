@@ -89,7 +89,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     const phones = await phoneService.getAllPhone();
     if (!phones || phones.length === 0) {
       return res
-        .status(StatusCode.NOT_FOUND)
+        .status(StatusCode.OK)
         .json(new ApiResponse(false, "No phones found",[]));
     }
     if (phones) {
