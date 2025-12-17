@@ -16,6 +16,10 @@ import { handleOfflineSession } from "../controllers/phone.js";
 import { handleSessionById } from "../controllers/phone.js";
 const router = Router();
 
+
+// get current shopify_session_id for frontend
+router.get("/session/current", getCurrentShopifySessionId);
+
 // create new phone
 router.post("/add", validate(phoneSchema), createNewWhatsAppPhone);
 
@@ -49,7 +53,6 @@ router.put("/:id", validate(phoneSchema), updateWhatsAppPhoneById);
 // delete phone by id
 router.delete("/:id", deleteWhatsAppPhoneById);
 
-// get current shopify_session_id for frontend
-router.get("/session/current", getCurrentShopifySessionId);
+
 
 export default router;
