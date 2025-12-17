@@ -73,7 +73,7 @@ export const getAllWhatsAppPhone = async (_req, res) => {
         if (!phones || phones.length === 0) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "No phones found"));
+                .json(new ApiResponse(false, "No phones found", []));
         }
         if (phones) {
             return res
