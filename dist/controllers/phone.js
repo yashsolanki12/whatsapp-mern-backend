@@ -1,7 +1,7 @@
 import ShopifySession from "../models/shopify-sessions.js";
 import * as phoneService from "../services/phone.js";
-import { ApiResponse } from "../utils/api-response.js";
 import mongoose from "mongoose";
+import { ApiResponse } from "../utils/api-response.js";
 import { StatusCode } from "../utils/status-codes.js";
 import { PhoneModel } from "../models/phone.js";
 // Get current shopify_session_id for frontend
@@ -69,7 +69,26 @@ export const createNewWhatsAppPhone = async (req, res) => {
 // List
 export const getAllWhatsAppPhone = async (_req, res) => {
     try {
-        const phones = await phoneService.getAllPhone();
+        // Get shop domain from header
+        const shopDomain = res.req.headers["x-shopify-shop-domain"];
+        if (!shopDomain) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Missing shop domain header"));
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop: shopDomain });
+        if (!sessionDoc || !sessionDoc._id) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "Session not found"));
+        }
+        // Find phones for this session only
+        const phones = await PhoneModel.find({
+            shopify_session_id: sessionDoc._id,
+        });
         if (!phones || phones.length === 0) {
             return res
                 .status(StatusCode.OK)

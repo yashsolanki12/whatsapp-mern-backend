@@ -1,9 +1,9 @@
 import ShopifySession from "../models/shopify-sessions.js";
 
-import { Request, Response } from "express";
 import * as phoneService from "../services/phone.js";
-import { ApiResponse } from "../utils/api-response.js";
 import mongoose from "mongoose";
+import { Request, Response } from "express";
+import { ApiResponse } from "../utils/api-response.js";
 import { StatusCode } from "../utils/status-codes.js";
 import { PhoneModel } from "../models/phone.js";
 
@@ -86,11 +86,34 @@ export const createNewWhatsAppPhone = async (req: Request, res: Response) => {
 // List
 export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
   try {
-    const phones = await phoneService.getAllPhone();
+    // Get shop domain from header
+    const shopDomain = res.req.headers["x-shopify-shop-domain"] as string;
+    if (!shopDomain) {
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Missing shop domain header"));
+    }
+
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop: shopDomain });
+
+    if (!sessionDoc || !sessionDoc._id) {
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json(new ApiResponse(false, "Session not found"));
+    }
+
+    // Find phones for this session only
+    const phones = await PhoneModel.find({
+      shopify_session_id: sessionDoc._id,
+    });
+
     if (!phones || phones.length === 0) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No phones found",[]));
+        .json(new ApiResponse(false, "No phones found", []));
     }
     if (phones) {
       return res
@@ -146,10 +169,7 @@ export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
 };
 
 // Detail
-export const getWhatsAppPhoneById = async (
-  req: Request,
-  res: Response,
-) => {
+export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -179,10 +199,7 @@ export const getWhatsAppPhoneById = async (
 };
 
 // Delete
-export const deleteWhatsAppPhoneById = async (
-  req: Request,
-  res: Response,
-) => {
+export const deleteWhatsAppPhoneById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     console.log("id", id);
@@ -270,10 +287,7 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
 };
 
 // Handle GET, POST, DELETE for /api/phone/:id (Shopify session storage)
-export const handleSessionById = async (
-  req: Request,
-  res: Response,
-) => {
+export const handleSessionById = async (req: Request, res: Response) => {
   const id = req.params.id;
   // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
   if (mongoose.Types.ObjectId.isValid(id)) {

@@ -3,9 +3,9 @@ import { createNewWhatsAppPhone, deleteWhatsAppPhoneById, getAllWhatsAppPhone, g
 import { validate } from "../middlewares/validate.js";
 import { phoneSchema } from "../validations/phone.js";
 import { handleOfflineSession } from "../controllers/phone.js";
+const router = Router();
 // Shopify session storage endpoints for /api/phone/:id (for session id, not phone id)
 import { handleSessionById } from "../controllers/phone.js";
-const router = Router();
 // get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
 // create new phone
@@ -18,7 +18,6 @@ router
     .get(handleOfflineSession)
     .post(handleOfflineSession)
     .delete(handleOfflineSession);
-// get phone by id
 // Shopify session storage endpoint
 // /session
 router

@@ -14,7 +14,7 @@ import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
 // Initialize express app
 const app = express();
 // Load environment variables
-dotenv.config({ path: ".env" });
+dotenv.config({ path: [".env.local", ".env"] });
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
