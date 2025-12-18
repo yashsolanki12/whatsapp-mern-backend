@@ -86,7 +86,7 @@ export const getAllWhatsAppPhone = async (_req, res) => {
                 .json(new ApiResponse(false, "Session not found"));
         }
         // Find phones for this session only
-        const phones = await PhoneModel.find({
+        const phones = await phoneService.getAllPhone({
             shopify_session_id: sessionDoc._id,
         });
         if (!phones || phones.length === 0) {

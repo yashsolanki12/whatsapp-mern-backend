@@ -3,7 +3,10 @@ import { IWhatsAppPhone } from "../types/phone.types.js";
 
 // Create new phone
 export const createPhone = async (
-  data: Pick<IWhatsAppPhone, "phone_number" | "country_code" | "shopify_session_id">
+  data: Pick<
+    IWhatsAppPhone,
+    "phone_number" | "country_code" | "shopify_session_id"
+  >
 ): Promise<IWhatsAppPhone> => {
   return await PhoneModel.create({
     phone_number: data.phone_number,
@@ -12,9 +15,20 @@ export const createPhone = async (
   });
 };
 
-// Get all phone
-export const getAllPhone = async (): Promise<IWhatsAppPhone[]> => {
-  return await PhoneModel.find().sort({ createdAt: -1 });
+// Get all phone, optionally filtered (e.g., by shopify_session_id)
+import mongoose from "mongoose";
+
+export const getAllPhone = async (
+  filter: Partial<IWhatsAppPhone> = {}
+): Promise<IWhatsAppPhone[]> => {
+  // Prepare a filter that matches the schema types
+  const mongoFilter: any = { ...filter };
+  if (mongoFilter.shopify_session_id) {
+    mongoFilter.shopify_session_id = new mongoose.Types.ObjectId(
+      mongoFilter.shopify_session_id as any
+    );
+  }
+  return await PhoneModel.find(mongoFilter).sort({ createdAt: -1 });
 };
 
 // Get phone by id
@@ -33,6 +47,8 @@ export const updatePhone = async (
 };
 
 // Delete phone by id
-export const deletePhoneById = async (id: string): Promise<IWhatsAppPhone | null> => {
+export const deletePhoneById = async (
+  id: string
+): Promise<IWhatsAppPhone | null> => {
   return await PhoneModel.findByIdAndDelete(id);
 };

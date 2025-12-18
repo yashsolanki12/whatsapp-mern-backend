@@ -106,7 +106,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     }
 
     // Find phones for this session only
-    const phones = await PhoneModel.find({
+    const phones = await phoneService.getAllPhone({
       shopify_session_id: sessionDoc._id,
     });
 
