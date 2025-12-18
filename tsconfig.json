@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "es2020",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
@@ -19,7 +19,7 @@
       "./node_modules/@types"
     ]
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "register-ts-node.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true,
