@@ -8,7 +8,6 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): any => {
-  console.log("❌ Error", err);
 
   return res
     .status(err.status || StatusCode.INTERNAL_SERVER_ERROR)

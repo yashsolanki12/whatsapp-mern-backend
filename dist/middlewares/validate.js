@@ -22,7 +22,6 @@ export const validate = (schema) => (req, res, next) => {
                 .status(StatusCode.BAD_REQUEST)
                 .json(error._zod.def.map((i) => i.message));
         }
-        console.error(error);
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json(new ApiResponse(false, "Internal server error", null));
     }
 };
