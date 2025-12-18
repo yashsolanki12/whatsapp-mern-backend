@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import express from "express";
 import dotenv from "dotenv";
-// import cors from "cors";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import phoneRoutes from "./routes/phone.routes.js";
 import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
@@ -9,25 +9,24 @@ import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
-// import { allowedOrigin } from "./utils/helper.js";
+import { allowedOrigin } from "./utils/helper.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
 // Use for production
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       if (!origin || allowedOrigin.includes(origin)) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"), false);
-//       }
-//     },
-//     credentials: true,
-//   })
-// );
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigin.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"), false);
+        }
+    },
+    credentials: true,
+}));
 // Dynamic CORS middleware for dev and preview environments
 const allowedOriginPatterns = [
     /.*\.myshopify\.com$/,
