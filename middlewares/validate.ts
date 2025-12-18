@@ -28,7 +28,6 @@ export const validate =
           .json(error._zod.def.map((i: any) => i.message));
       }
 
-      console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json(new ApiResponse(false, "Internal server error",null));
     }
   };
