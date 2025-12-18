@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import { StatusCode } from "@shopify/shopify-api";
 import { ApiResponse } from "../utils/api-response.js";
 const router = express.Router();
-dotenv.config({ path: ".env" });
+dotenv.config({ path: [".env"] });
 const shopifyApiKey = process.env.SHOPIFY_API_KEY;
 const shopifyApiSecret = process.env.SHOPIFY_API_SECRET;
 const shopifyScopes = process.env.SHOPIFY_SCOPES;

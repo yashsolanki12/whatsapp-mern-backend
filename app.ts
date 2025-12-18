@@ -1,41 +1,38 @@
 import crypto from "crypto";
-
 import express from "express";
 import dotenv from "dotenv";
-// import cors from "cors";
-import { connectDb } from "./config/db.js";
-import { errorHandler } from "./middlewares/error-handler.js";
+import cors from "cors";
 import cookieParser from "cookie-parser";
-
-// Serve static files from the React app build
-
-import { ApiResponse } from "./utils/api-response.js";
-import { StatusCode } from "@shopify/shopify-api";
 import phoneRoutes from "./routes/phone.routes.js";
 import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
-// import { allowedOrigin } from "./utils/helper.js";
 
-// Initialize express app
+import { connectDb } from "./config/db.js";
+import { errorHandler } from "./middlewares/error-handler.js";
+import { ApiResponse } from "./utils/api-response.js";
+import { StatusCode } from "@shopify/shopify-api";
+import { allowedOrigin } from "./utils/helper.js";
+
 const app = express();
 
-// Load environment variables
-dotenv.config({ path: [".env.local", ".env"] });
+dotenv.config({ path: [".env"] });
 
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
 
 // Use for production
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin || allowedOrigin.includes(origin)) {
-//       callback(null, true)
-//     } else {
-//       callback(new Error('Not allowed by CORS'), false)
-//     }
-//   },
-//   credentials: true
-// }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigin.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"), false);
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Dynamic CORS middleware for dev and preview environments
 const allowedOriginPatterns = [
@@ -100,19 +97,9 @@ app.get("/", (_req, res) => {
 
 // // Routes for phone
 app.use("/api/phone", phoneRoutes);
+
 // Routes for Shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// app.use(express.static(path.join(__dirname, "../web/build")));
-
-// // Serve React app for all non-API routes
-// app.get("*", (req, res) => {
-//   if (req.originalUrl.startsWith("/api/"))
-//     return res.status(StatusCode.NotFound).json({ error: "Not Found" });
-//   res.sendFile(path.join(__dirname, ""));
-// });
 
 // Global Error Handler
 app.use(errorHandler);
@@ -167,16 +154,14 @@ app.post(
         .json(new ApiResponse(false, "Webhook HMAC validation failed"));
     }
     // Parse the webhook payload
-    let payload;
+
     try {
-      payload = JSON.parse(body.toString());
+      JSON.parse(body.toString());
     } catch (e) {
       return res
         .status(StatusCode.BadRequest)
         .json(new ApiResponse(false, "Invalid JSON"));
     }
-    // Handle the webhook event here
-    console.log("Received webhook:", req.headers["x-shopify-topic"], payload);
     res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
   }
 );
