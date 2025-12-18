@@ -17,7 +17,7 @@ export const getCurrentShopifySessionId = async (
     if (!shopDomain) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header"));
+        .json(new ApiResponse(false, "Missing shop domain header."));
     }
 
     const sessionDoc = await mongoose.connection
@@ -26,7 +26,7 @@ export const getCurrentShopifySessionId = async (
     if (!sessionDoc || !sessionDoc._id) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Session not found"));
+        .json(new ApiResponse(false, "Session not found."));
     }
     if (sessionDoc) {
       return res.json({ success: true, session: sessionDoc });
@@ -91,7 +91,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     if (!shopDomain) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header"));
+        .json(new ApiResponse(false, "Missing shop domain header."));
     }
 
     // Find the session for this shop
@@ -102,7 +102,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     if (!sessionDoc || !sessionDoc._id) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Session not found"));
+        .json(new ApiResponse(false, "Session not found."));
     }
 
     // Find phones for this session only
@@ -113,12 +113,12 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     if (!phones || phones.length === 0) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No phones found", []));
+        .json(new ApiResponse(false, "No phones found.", []));
     }
     if (phones) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Phone retrieved successfully", phones));
+        .json(new ApiResponse(true, "Phone retrieved successfully.", phones));
     }
   } catch (error) {
     return res
@@ -176,7 +176,7 @@ export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid phone id format"));
+        .json(new ApiResponse(false, "Invalid phone id format."));
     }
 
     const phone = await phoneService.getPhoneById(id);
@@ -184,12 +184,12 @@ export const getWhatsAppPhoneById = async (req: Request, res: Response) => {
     if (!phone) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Phone not found"));
+        .json(new ApiResponse(false, "Phone not found."));
     }
     if (phone) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Phone retrieved successfully", phone));
+        .json(new ApiResponse(true, "Phone retrieved successfully.", phone));
     }
   } catch (error) {
     return res
@@ -206,7 +206,7 @@ export const deleteWhatsAppPhoneById = async (req: Request, res: Response) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid phone id format"));
+        .json(new ApiResponse(false, "Invalid phone id format."));
     }
 
     const deletedPhone = await phoneService.deletePhoneById(id);
@@ -214,13 +214,13 @@ export const deleteWhatsAppPhoneById = async (req: Request, res: Response) => {
     if (!deletedPhone) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Phone not found"));
+        .json(new ApiResponse(false, "Phone not found."));
     }
     if (deletedPhone) {
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Phone deleted successfully", deletedPhone)
+          new ApiResponse(true, "Phone deleted successfully.", deletedPhone)
         );
     }
   } catch (error) {
@@ -237,7 +237,7 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
   if (!shop) {
     return res
       .status(StatusCode.BAD_REQUEST)
-      .json(new ApiResponse(false, "Missing shop domain in URL"));
+      .json(new ApiResponse(false, "Missing shop domain in URL."));
   }
   try {
     if (req.method === "GET") {
@@ -246,7 +246,7 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
       if (!session) {
         return res
           .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found"));
+          .json(new ApiResponse(false, "Session not found."));
       }
       return res.status(StatusCode.OK).json(session);
     } else if (req.method === "POST") {
@@ -269,15 +269,15 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
       if (!deleted) {
         return res
           .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found to delete"));
+          .json(new ApiResponse(false, "Session not found to delete."));
       }
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Session deleted", deleted));
+        .json(new ApiResponse(true, "Session deleted.", deleted));
     } else {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Unsupported method"));
+        .json(new ApiResponse(false, "Unsupported method."));
     }
   } catch (error) {
     return res
@@ -301,7 +301,7 @@ export const handleSessionById = async (req: Request, res: Response) => {
       if (!session) {
         return res
           .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found"));
+          .json(new ApiResponse(false, "Session not found."));
       }
       return res.status(StatusCode.OK).json(session);
     } else if (req.method === "POST") {
@@ -322,15 +322,15 @@ export const handleSessionById = async (req: Request, res: Response) => {
       if (!deleted) {
         return res
           .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found to delete"));
+          .json(new ApiResponse(false, "Session not found to delete."));
       }
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Session deleted", deleted));
+        .json(new ApiResponse(true, "Session deleted.", deleted));
     } else {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Unsupported method"));
+        .json(new ApiResponse(false, "Unsupported method."));
     }
   } catch (error) {
     return res
