@@ -10,7 +10,7 @@ import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
-import { allowedOrigin } from "./utils/helper.js";
+import { isAllowedOrigin } from "./utils/helper.js";
 
 const app = express();
 
@@ -24,13 +24,14 @@ app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigin.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"), false);
       }
     },
     credentials: true,
+    allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
   })
 );
 
