@@ -9,7 +9,7 @@ import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
-import { allowedOrigin } from "./utils/helper.js";
+import { isAllowedOrigin } from "./utils/helper.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 // Middleware
@@ -18,7 +18,7 @@ app.use(express.json());
 // Use for production
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigin.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
             callback(null, true);
         }
         else {
@@ -26,6 +26,7 @@ app.use(cors({
         }
     },
     credentials: true,
+    allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
 }));
 // Dynamic CORS middleware for dev and preview environments
 const allowedOriginPatterns = [
