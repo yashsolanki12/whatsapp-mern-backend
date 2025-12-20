@@ -24,7 +24,13 @@ app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
+      // Pass req.method to helper for OPTIONS support
+      // @ts-ignore
+      const reqMethod =
+        typeof this !== "undefined" && this && (this as any).req && (this as any).req.method
+          ? (this as any).req.method
+          : undefined;
+      if (isAllowedOrigin(origin, reqMethod)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"), false);
