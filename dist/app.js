@@ -18,7 +18,12 @@ app.use(express.json());
 // Use for production
 app.use(cors({
     origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) {
+        // Pass req.method to helper for OPTIONS support
+        // @ts-ignore
+        const reqMethod = typeof this !== "undefined" && this && this.req && this.req.method
+            ? this.req.method
+            : undefined;
+        if (isAllowedOrigin(origin, reqMethod)) {
             callback(null, true);
         }
         else {
