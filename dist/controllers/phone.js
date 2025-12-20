@@ -38,13 +38,13 @@ export const createNewWhatsAppPhone = async (req, res) => {
         if (!phone_number || !country_code || !shopify_session_id) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Phone number, country code, and shopify_session_id are required"));
+                .json(new ApiResponse(false, "Phone number, country code, and shopify_session_id are required."));
         }
         const existingNumber = await PhoneModel.findOne({ phone_number });
         if (existingNumber) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Phone number already exist"));
+                .json(new ApiResponse(false, "Phone number already exist."));
         }
         const newPhone = await phoneService.createPhone({
             phone_number,
@@ -54,11 +54,11 @@ export const createNewWhatsAppPhone = async (req, res) => {
         if (!newPhone) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Failed to create new phone"));
+                .json(new ApiResponse(false, "Failed to create new phone."));
         }
         return res
             .status(StatusCode.CREATED)
-            .json(new ApiResponse(true, "Phone created successfully", newPhone));
+            .json(new ApiResponse(true, "Phone created successfully.", newPhone));
     }
     catch (error) {
         return res
@@ -114,12 +114,12 @@ export const updateWhatsAppPhoneById = async (req, res) => {
         if (!phone_number || !country_code) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Phone number and country code are required"));
+                .json(new ApiResponse(false, "Phone number and country code are required."));
         }
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid phone id format"));
+                .json(new ApiResponse(false, "Invalid phone id format."));
         }
         const updatedPhone = await phoneService.updatePhone(id, {
             phone_number,
@@ -128,12 +128,12 @@ export const updateWhatsAppPhoneById = async (req, res) => {
         if (!updatedPhone) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Phone not found"));
+                .json(new ApiResponse(false, "Phone not found."));
         }
         if (updatedPhone) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Phone updated successfully", updatedPhone));
+                .json(new ApiResponse(true, "Phone updated successfully.", updatedPhone));
         }
     }
     catch (error) {
@@ -222,7 +222,7 @@ export const handleOfflineSession = async (req, res) => {
             if (!data || !data.id || !data.shop) {
                 return res
                     .status(StatusCode.BAD_REQUEST)
-                    .json(new ApiResponse(false, "Missing session data (id, shop)"));
+                    .json(new ApiResponse(false, "Missing session data (id, shop)."));
             }
             const updated = await ShopifySession.findOneAndUpdate({ shop: data.shop }, { $set: data }, { upsert: true, new: true });
             return res.status(StatusCode.OK).json(updated);
@@ -258,7 +258,7 @@ export const handleSessionById = async (req, res) => {
     if (mongoose.Types.ObjectId.isValid(id)) {
         return res
             .status(StatusCode.BAD_REQUEST)
-            .json(new ApiResponse(false, "Not a session id route"));
+            .json(new ApiResponse(false, "Not a session id route."));
     }
     try {
         if (req.method === "GET") {
