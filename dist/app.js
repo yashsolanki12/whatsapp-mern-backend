@@ -12,9 +12,6 @@ import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
 const app = express();
 dotenv.config({ path: [".env"] });
-// Middleware
-app.use(cookieParser());
-app.use(express.json());
 app.get("/", (_req, res) => {
     res.json({ message: "Server is running 🚀" });
 });
@@ -70,6 +67,10 @@ app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req
     }
     res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
 });
+// Middleware
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // Use for production
 app.use(cors({
     origin: (origin, callback) => {
