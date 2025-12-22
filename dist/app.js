@@ -12,6 +12,61 @@ import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
 const app = express();
 dotenv.config({ path: [".env"] });
+app.get("/", (_req, res) => {
+    res.json({ message: "Server is running 🚀" });
+});
+// Health check endpoint
+app.get("/api/health", (_req, res) => {
+    res.status(StatusCode.Ok).json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        database: "connected",
+    });
+});
+app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), (req, res) => {
+    const secret = process.env.SHOPIFY_API_SECRET;
+    if (!secret) {
+        return res
+            .status(StatusCode.Unauthorized)
+            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+    }
+    const body = req.body; // This is a Buffer, just like in /api/shopify/webhook
+    const digest = crypto
+        .createHmac("sha256", secret)
+        .update(body, "utf8")
+        .digest("base64");
+    res.json({ hmac: digest });
+});
+// Shopify Webhook Handler (direct route, no controller/router)
+app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req, res) => {
+    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
+    const secret = process.env.SHOPIFY_API_SECRET;
+    if (!secret) {
+        return res
+            .status(StatusCode.Unauthorized)
+            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+    }
+    const body = req.body;
+    const digest = crypto
+        .createHmac("sha256", secret)
+        .update(body, "utf8")
+        .digest("base64");
+    if (digest !== hmacHeader) {
+        return res
+            .status(StatusCode.Unauthorized)
+            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+    }
+    // Parse the webhook payload
+    try {
+        JSON.parse(body.toString());
+    }
+    catch (e) {
+        return res
+            .status(StatusCode.BadRequest)
+            .json(new ApiResponse(false, "Invalid JSON"));
+    }
+    res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
+});
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
@@ -20,7 +75,10 @@ app.use(cors({
     origin: (origin, callback) => {
         // Pass req.method to helper for OPTIONS support
         // @ts-ignore
-        const reqMethod = typeof this !== "undefined" && this && this.req && this.req.method
+        const reqMethod = typeof this !== "undefined" &&
+            this &&
+            this.req &&
+            this.req.method
             ? this.req.method
             : undefined;
         if (isAllowedOrigin(origin, reqMethod)) {
@@ -77,23 +135,12 @@ app.use((req, res, next) => {
 //   })
 // );
 // Basic route for testing
-app.get("/", (_req, res) => {
-    res.json({ message: "Server is running 🚀" });
-});
 // // Routes for phone
 app.use("/api/phone", phoneRoutes);
 // Routes for Shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
 // Global Error Handler
 app.use(errorHandler);
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
-    res.status(StatusCode.Ok).json({
-        status: "ok",
-        timestamp: new Date().toISOString(),
-        database: "connected",
-    });
-});
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {
     console.log(`404 - Not Found: ${req.method} ${req.originalUrl}`);
@@ -109,36 +156,6 @@ app.use((err, _req, res, _next) => {
         message: err.message,
         stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
-});
-// Shopify Webhook Handler (direct route, no controller/router)
-app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req, res) => {
-    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
-    const secret = process.env.SHOPIFY_API_SECRET;
-    if (!secret) {
-        return res
-            .status(StatusCode.Unauthorized)
-            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
-    }
-    const body = req.body;
-    const digest = crypto
-        .createHmac("sha256", secret)
-        .update(body, "utf8")
-        .digest("base64");
-    if (digest !== hmacHeader) {
-        return res
-            .status(StatusCode.Unauthorized)
-            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
-    }
-    // Parse the webhook payload
-    try {
-        JSON.parse(body.toString());
-    }
-    catch (e) {
-        return res
-            .status(StatusCode.BadRequest)
-            .json(new ApiResponse(false, "Invalid JSON"));
-    }
-    res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
 });
 // Database connection
 const mongoDbUrl = process.env.MONGODB_URL;
