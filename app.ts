@@ -174,6 +174,8 @@ app.use((req, res, next) => {
 
 // // Routes for phone
 app.use("/api/phone", phoneRoutes);
+// Add Shopify App Proxy route for live frontend
+app.use("/apps/whatsapp-mern-app/phone", phoneRoutes);
 
 // Routes for Shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
