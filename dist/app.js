@@ -71,7 +71,9 @@ app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Use for production
+// CORS Configuration for Shopify Integration
+// This handles cross-origin requests from Shopify admin and storefronts
+// Fixes: "Missing CORS headers: Your backend wasn't configured to allow requests from the Shopify domain"
 app.use(cors({
     origin: (origin, callback) => {
         // Pass req.method to helper for OPTIONS support
@@ -93,6 +95,8 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
 }));
 // Dynamic CORS middleware for dev and preview environments
+// Additional layer to handle various Shopify domains and development environments
+// Ensures compatibility with ngrok, cloudflare tunnels, and local development
 const allowedOriginPatterns = [
     /.*\.myshopify\.com$/,
     /.*\.ngrok-free\.dev$/,
