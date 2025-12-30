@@ -8,6 +8,7 @@ export function isAllowedOrigin(origin?: string, reqMethod?: string): boolean {
   // if (origin === "https://admin.shopify.com") return true;
   if (/https?:\/\/([\w.-]+)\.onrender\.com$/.test(origin)) return true;
   if (/https?:\/\/([\w.-]+)\.shopify\.com$/.test(origin)) return true;
+  if (/https?:\/\/([\w.-]+)\.net$/.test(origin)) return true;
   if (/^http:\/\/localhost:\d+$/.test(origin)) return true;
   if (/.*\.trycloudflare\.com$/.test(origin)) return true;
   return false;
