@@ -2,13 +2,17 @@
 export function isAllowedOrigin(origin?: string, reqMethod?: string): boolean {
   if (!origin) return true;
   if (reqMethod && reqMethod.toUpperCase() === "OPTIONS") return true;
+  // Define only specific trusted domains
+  const allowedOrigins = [
+    "https://whatsup.ecodesoft.net",
+  ];
 
+  if (allowedOrigins.includes(origin)) return true;
   // allowed origin list
   if (/https?:\/\/([\w.-]+)\.myshopify\.com$/.test(origin)) return true;
   // if (origin === "https://admin.shopify.com") return true;
   if (/https?:\/\/([\w.-]+)\.onrender\.com$/.test(origin)) return true;
   if (/https?:\/\/([\w.-]+)\.shopify\.com$/.test(origin)) return true;
-  if (/https?:\/\/([\w.-]+)\.net$/.test(origin)) return true;
   if (/^http:\/\/localhost:\d+$/.test(origin)) return true;
   if (/.*\.trycloudflare\.com$/.test(origin)) return true;
   return false;
