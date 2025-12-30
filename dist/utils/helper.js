@@ -12,6 +12,8 @@ export function isAllowedOrigin(origin, reqMethod) {
         return true;
     if (/https?:\/\/([\w.-]+)\.shopify\.com$/.test(origin))
         return true;
+    if (/https?:\/\/([\w.-]+)\.net$/.test(origin))
+        return true;
     if (/^http:\/\/localhost:\d+$/.test(origin))
         return true;
     if (/.*\.trycloudflare\.com$/.test(origin))
