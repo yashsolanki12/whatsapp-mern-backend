@@ -8,7 +8,9 @@ import { PhoneModel } from "../models/phone.js";
 export const getCurrentShopifySessionId = async (req, res) => {
     try {
         const shopDomain = req.headers["x-shopify-shop-domain"];
+        console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
         if (!shopDomain) {
+            console.log("❌ Missing shop domain header in session request");
             return res
                 .status(StatusCode.BAD_REQUEST)
                 .json(new ApiResponse(false, "Missing shop domain header."));
@@ -16,16 +18,20 @@ export const getCurrentShopifySessionId = async (req, res) => {
         const sessionDoc = await mongoose.connection
             .collection("shopify_sessions")
             .findOne({ shop: shopDomain });
+        console.log("🔍 Session document found:", sessionDoc ? "Yes" : "No");
         if (!sessionDoc || !sessionDoc._id) {
+            console.log("❌ Session not found for shop:", shopDomain);
             return res
                 .status(StatusCode.NOT_FOUND)
                 .json(new ApiResponse(false, "Session not found."));
         }
         if (sessionDoc) {
+            console.log("✅ Session found successfully");
             return res.json({ success: true, session: sessionDoc });
         }
     }
     catch (error) {
+        console.error("❌ Error in getCurrentShopifySessionId:", error);
         return res
             .status(StatusCode.INTERNAL_SERVER_ERROR)
             .json(new ApiResponse(false, "Internal server error"));
@@ -71,7 +77,9 @@ export const getAllWhatsAppPhone = async (_req, res) => {
     try {
         // Get shop domain from header
         const shopDomain = res.req.headers["x-shopify-shop-domain"];
+        console.log("📱 getAllWhatsAppPhone - Shop domain:", shopDomain);
         if (!shopDomain) {
+            console.log("❌ Missing shop domain header");
             return res
                 .status(StatusCode.BAD_REQUEST)
                 .json(new ApiResponse(false, "Missing shop domain header."));
@@ -80,7 +88,9 @@ export const getAllWhatsAppPhone = async (_req, res) => {
         const sessionDoc = await mongoose.connection
             .collection("shopify_sessions")
             .findOne({ shop: shopDomain });
+        console.log("🔍 Session found:", sessionDoc ? "Yes" : "No");
         if (!sessionDoc || !sessionDoc._id) {
+            console.log("❌ Session not found for shop:", shopDomain);
             return res
                 .status(StatusCode.NOT_FOUND)
                 .json(new ApiResponse(false, "Session not found."));
@@ -89,6 +99,7 @@ export const getAllWhatsAppPhone = async (_req, res) => {
         const phones = await phoneService.getAllPhone({
             shopify_session_id: sessionDoc._id,
         });
+        console.log("📱 Phones found:", phones ? phones.length : 0);
         if (!phones || phones.length === 0) {
             return res
                 .status(StatusCode.OK)
@@ -101,6 +112,7 @@ export const getAllWhatsAppPhone = async (_req, res) => {
         }
     }
     catch (error) {
+        console.error("❌ Error in getAllWhatsAppPhone:", error);
         return res
             .status(StatusCode.INTERNAL_SERVER_ERROR)
             .json(new ApiResponse(false, "Internal server error"));
