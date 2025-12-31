@@ -121,10 +121,10 @@ app.use(
 const allowedOriginPatterns = [
   /.*\.myshopify\.com$/,
   /.*\.ngrok-free\.dev$/,
-  // /.*\.trycloudflare\.com$/,
-  /https?:\/\/([\w.-]+)\.trycloudflare\.com$/,
+  /.*\.trycloudflare\.com$/,
   /^https:\/\/admin\.shopify\.com$/,
   /^http:\/\/localhost:\d+$/,
+  /^https:\/\/localhost:\d+$/,
 ];
 
 app.use((req, res, next) => {
