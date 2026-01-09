@@ -1,3 +1,5 @@
+// Get all phone, optionally filtered (e.g., by shopify_session_id)
+import mongoose from "mongoose";
 import { PhoneModel } from "../models/phone.js";
 import { IWhatsAppPhone } from "../types/phone.types.js";
 
@@ -15,8 +17,7 @@ export const createPhone = async (
   });
 };
 
-// Get all phone, optionally filtered (e.g., by shopify_session_id)
-import mongoose from "mongoose";
+
 
 export const getAllPhone = async (
   filter: Partial<IWhatsAppPhone> = {}
