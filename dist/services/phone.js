@@ -1,3 +1,5 @@
+// Get all phone, optionally filtered (e.g., by shopify_session_id)
+import mongoose from "mongoose";
 import { PhoneModel } from "../models/phone.js";
 // Create new phone
 export const createPhone = async (data) => {
@@ -7,8 +9,6 @@ export const createPhone = async (data) => {
         shopify_session_id: data.shopify_session_id,
     });
 };
-// Get all phone, optionally filtered (e.g., by shopify_session_id)
-import mongoose from "mongoose";
 export const getAllPhone = async (filter = {}) => {
     // Prepare a filter that matches the schema types
     const mongoFilter = { ...filter };
