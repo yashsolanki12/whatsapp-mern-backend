@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { uninstallCleanup } from "../controllers/phone.js";
 import { createNewWhatsAppPhone, deleteWhatsAppPhoneById, getAllWhatsAppPhone, getWhatsAppPhoneById, updateWhatsAppPhoneById, getCurrentShopifySessionId, } from "../controllers/phone.js";
 import { validate } from "../middlewares/validate.js";
 import { phoneSchema } from "../validations/phone.js";
@@ -6,6 +7,8 @@ import { handleOfflineSession } from "../controllers/phone.js";
 const router = Router();
 // Shopify session storage endpoints for /api/phone/:id (for session id, not phone id)
 import { handleSessionById } from "../controllers/phone.js";
+// POST /phone/uninstall-cleanup
+router.post("/uninstall-cleanup", uninstallCleanup);
 // get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
 // create new phone
