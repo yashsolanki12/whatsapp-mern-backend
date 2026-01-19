@@ -4,6 +4,30 @@ import mongoose from "mongoose";
 import { ApiResponse } from "../utils/api-response.js";
 import { StatusCode } from "../utils/status-codes.js";
 import { PhoneModel } from "../models/phone.js";
+// Uninstall cleanup: delete session and all related phone/settings for a shop
+export const uninstallCleanup = async (req, res) => {
+    try {
+        const { shop } = req.body;
+        if (!shop) {
+            return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Missing shop domain."));
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection.collection("shopify_sessions").findOne({ shop });
+        if (!sessionDoc || !sessionDoc._id) {
+            // Session already deleted, nothing to do
+            return res.status(StatusCode.OK).json(new ApiResponse(true, "Session already deleted."));
+        }
+        // Delete all phone/settings linked to this session
+        await PhoneModel.deleteMany({ shopify_session_id: sessionDoc._id });
+        // Delete the session itself
+        await mongoose.connection.collection("shopify_sessions").deleteOne({ shop });
+        return res.status(StatusCode.OK).json(new ApiResponse(true, "Session and related data deleted."));
+    }
+    catch (error) {
+        console.error("❌ Error in uninstallCleanup:", error);
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json(new ApiResponse(false, "Internal server error"));
+    }
+};
 // Get current shopify_session_id for frontend
 export const getCurrentShopifySessionId = async (req, res) => {
     try {
