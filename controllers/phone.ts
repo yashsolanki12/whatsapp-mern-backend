@@ -1,4 +1,3 @@
-
 import ShopifySession from "../models/shopify-sessions.js";
 
 import * as phoneService from "../services/phone.js";
@@ -7,40 +6,60 @@ import { Request, Response } from "express";
 import { ApiResponse } from "../utils/api-response.js";
 import { StatusCode } from "../utils/status-codes.js";
 import { PhoneModel } from "../models/phone.js";
+import dotenv from "dotenv";
+
+dotenv.config({ path: [".env"] });
 
 // Uninstall cleanup: delete session and all related phone/settings for a shop
 export const uninstallCleanup = async (req: Request, res: Response) => {
   try {
+    const apiKey = req.headers["x-api-key"];
+    if (apiKey !== process.env.BACKEND_API_KEY) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
     const { shop } = req.body;
     if (!shop) {
-      return res.status(StatusCode.BAD_REQUEST).json(new ApiResponse(false, "Missing shop domain."));
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Missing shop domain."));
     }
     // Find the session for this shop
-    const sessionDoc = await mongoose.connection.collection("shopify_sessions").findOne({ shop });
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop });
     if (!sessionDoc || !sessionDoc._id) {
       // Session already deleted, nothing to do
-      return res.status(StatusCode.OK).json(new ApiResponse(true, "Session already deleted."));
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Session already deleted."));
     }
     // Delete all phone/settings linked to this session
     await PhoneModel.deleteMany({ shopify_session_id: sessionDoc._id });
     // Delete the session itself
-    await mongoose.connection.collection("shopify_sessions").deleteOne({ shop });
-    return res.status(StatusCode.OK).json(new ApiResponse(true, "Session and related data deleted."));
+    await mongoose.connection
+      .collection("shopify_sessions")
+      .deleteOne({ shop });
+    return res
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "Session and related data deleted."));
   } catch (error) {
     console.error("❌ Error in uninstallCleanup:", error);
-    return res.status(StatusCode.INTERNAL_SERVER_ERROR).json(new ApiResponse(false, "Internal server error"));
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
   }
 };
 
 // Get current shopify_session_id for frontend
 export const getCurrentShopifySessionId = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   try {
     const shopDomain = req.headers["x-shopify-shop-domain"] as string;
     console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
-    
+
     if (!shopDomain) {
       console.log("❌ Missing shop domain header in session request");
       return res
@@ -51,9 +70,9 @@ export const getCurrentShopifySessionId = async (
     const sessionDoc = await mongoose.connection
       .collection("shopify_sessions")
       .findOne({ shop: shopDomain });
-      
+
     console.log("🔍 Session document found:", sessionDoc ? "Yes" : "No");
-    
+
     if (!sessionDoc || !sessionDoc._id) {
       console.log("❌ Session not found for shop:", shopDomain);
       return res
@@ -83,8 +102,8 @@ export const createNewWhatsAppPhone = async (req: Request, res: Response) => {
         .json(
           new ApiResponse(
             false,
-            "Phone number, country code, and shopify_session_id are required."
-          )
+            "Phone number, country code, and shopify_session_id are required.",
+          ),
         );
     }
 
@@ -123,7 +142,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
     // Get shop domain from header
     const shopDomain = res.req.headers["x-shopify-shop-domain"] as string;
     console.log("📱 getAllWhatsAppPhone - Shop domain:", shopDomain);
-    
+
     if (!shopDomain) {
       console.log("❌ Missing shop domain header");
       return res
@@ -137,7 +156,7 @@ export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
       .findOne({ shop: shopDomain });
 
     console.log("🔍 Session found:", sessionDoc ? "Yes" : "No");
-    
+
     if (!sessionDoc || !sessionDoc._id) {
       console.log("❌ Session not found for shop:", shopDomain);
       return res
@@ -180,7 +199,7 @@ export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
       return res
         .status(StatusCode.BAD_REQUEST)
         .json(
-          new ApiResponse(false, "Phone number and country code are required.")
+          new ApiResponse(false, "Phone number and country code are required."),
         );
     }
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -201,7 +220,7 @@ export const updateWhatsAppPhoneById = async (req: Request, res: Response) => {
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Phone updated successfully.", updatedPhone)
+          new ApiResponse(true, "Phone updated successfully.", updatedPhone),
         );
     }
   } catch (error) {
@@ -262,7 +281,7 @@ export const deleteWhatsAppPhoneById = async (req: Request, res: Response) => {
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Phone deleted successfully.", deletedPhone)
+          new ApiResponse(true, "Phone deleted successfully.", deletedPhone),
         );
     }
   } catch (error) {
@@ -302,7 +321,7 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
       const updated = await ShopifySession.findOneAndUpdate(
         { shop: data.shop },
         { $set: data },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
       return res.status(StatusCode.OK).json(updated);
     } else if (req.method === "DELETE") {
@@ -356,7 +375,7 @@ export const handleSessionById = async (req: Request, res: Response) => {
       const updated = await ShopifySession.findOneAndUpdate(
         { id: data.id },
         { $set: data },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
       return res.status(StatusCode.OK).json(updated);
     } else if (req.method === "DELETE") {
