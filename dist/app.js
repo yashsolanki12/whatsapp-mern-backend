@@ -44,54 +44,59 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
         .digest("base64");
     res.json({ hmac: digest });
 });
-// Shopify Webhook Handler (Highly Resilient Version)
-app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), // Strictly capture for Shopify webhooks
+// Shopify Webhook Handler (Ultra-Diagnostic Version)
+app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), // Capture EVERYTHING to be safe
 async (req, res) => {
     const topic = req.get("X-Shopify-Topic");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
     const shopHeader = req.get("X-Shopify-Shop-Domain");
-    console.log(`[Webhook] Incoming Request - Topic: ${topic}, Shop: ${shopHeader}`);
-    const primarySecret = process.env.SHOPIFY_API_SECRET?.trim();
-    if (!primarySecret) {
+    console.log(`[Webhook] Topic: ${topic}, Shop: ${shopHeader}`);
+    const rawSecret = process.env.SHOPIFY_API_SECRET?.trim() || "";
+    // Remove literal quotes if present
+    const cleanSecret = rawSecret.replace(/^["']|["']$/g, "");
+    if (!cleanSecret) {
         console.error("[Webhook] SHOPIFY_API_SECRET is missing!");
-        return res.status(500).json({ success: false, message: "Configuration error" });
+        return res.status(500).json({ success: false, message: "Missing Secret" });
     }
     const body = req.body;
     if (!body || body.length === 0) {
-        console.error("[Webhook] Body is empty!");
-        return res.status(400).json({ success: false, message: "Empty body" });
+        console.error("[Webhook] Body length is 0. Middleware issue?");
+        return res.status(400).json({ success: false, message: "Empty Body" });
     }
-    // Try multiple secret versions to be safe
-    const secretsToTry = [
-        primarySecret,
-        primarySecret.replace("shpss_", ""),
+    // Diagnostics: Log secret structure
+    const maskedSecret = cleanSecret.substring(0, 15) + "..." + cleanSecret.substring(cleanSecret.length - 4);
+    console.log(`[Webhook] Secret Structure: "${maskedSecret}" (Length: ${cleanSecret.length})`);
+    // Check for common typo (Index 17 is the 18th character)
+    if (cleanSecret.length >= 18 && cleanSecret[17] === "0") {
+        console.warn("[Webhook] ⚠️ WARNING: 18th character is '0'. Typo check needed!");
+    }
+    // Try all possible interpretations
+    const variants = [
+        cleanSecret, // Exact
+        cleanSecret.replace("shpss_", ""), // No prefix
     ];
-    let verifiedSecret = null;
-    let finalCalculatedHmac = "";
-    for (const secretToTry of secretsToTry) {
-        const digest = crypto.createHmac("sha256", secretToTry).update(body).digest("base64");
-        if (digest === hmacHeader) {
-            verifiedSecret = secretToTry;
+    let verified = false;
+    // let fallbackHmac = "";
+    for (const secret of variants) {
+        const hmac = crypto.createHmac("sha256", secret).update(body).digest("base64");
+        if (hmac === hmacHeader) {
+            verified = true;
             break;
         }
-        finalCalculatedHmac = digest;
+        // fallbackHmac = hmac;
     }
-    if (!verifiedSecret) {
+    if (!verified) {
         console.error(`[Webhook] HMAC MISMATCH!`);
-        console.error(`[Webhook] Secret used (start): ${primarySecret.substring(0, 15)}...`);
-        console.error(`[Webhook] Calculated HMAC: ${finalCalculatedHmac}`);
-        console.error(`[Webhook] Received HMAC:   ${hmacHeader}`);
-        return res
-            .status(StatusCode.Unauthorized)
-            .json(new ApiResponse(false, "HMAC validation failed"));
+        console.error(`[Webhook] Calculated 1 (Exact): ${crypto.createHmac("sha256", cleanSecret).update(body).digest("base64")}`);
+        console.error(`[Webhook] Received Header:    ${hmacHeader}`);
+        return res.status(401).json(new ApiResponse(false, "HMAC validation failed"));
     }
     console.log("[Webhook] ✅ HMAC Verified Successfully!");
     try {
         const payload = JSON.parse(body.toString());
         const shop = shopHeader || payload.myshopify_domain || payload.shop;
         if (topic === "app/uninstalled") {
-            console.log(`[Webhook] Handling uninstall for: ${shop}`);
-            // Ensure we handle unauthorized calls securely
+            console.log(`[Webhook] Processing uninstall for: ${shop}`);
             req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
             req.body = { shop };
             await uninstallCleanup(req, res);
@@ -99,9 +104,9 @@ async (req, res) => {
         }
     }
     catch (e) {
-        console.error("[Webhook] Error processing payload:", e);
+        console.error("[Webhook] Parse error:", e);
     }
-    res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
+    res.status(StatusCode.Ok).json(new ApiResponse(true, "Received"));
 });
 // Standard Middleware (Applied AFTER webhook route to avoid interference)
 app.use(cookieParser());
