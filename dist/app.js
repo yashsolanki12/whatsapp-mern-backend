@@ -51,7 +51,7 @@ async (req, res) => {
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
     const shopHeader = req.get("X-Shopify-Shop-Domain");
     console.log(`[Webhook] Incoming Request - Topic: ${topic}, Shop: ${shopHeader}`);
-    const secret = process.env.SHOPIFY_API_SECRET;
+    const secret = process.env.SHOPIFY_API_SECRET?.trim();
     if (!secret) {
         console.error("[Webhook] SHOPIFY_API_SECRET is missing from environment variables!");
         return res.status(500).json({ success: false, message: "Configuration error" });
