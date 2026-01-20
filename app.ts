@@ -76,25 +76,35 @@ app.post(
     const body = req.body;
     const bodyString = body.toString();
     console.log(`[Webhook] Body length: ${body.length}, Body starts with: ${bodyString.substring(0, 50)}`);
-    console.log(`[Webhook] API Secret Length: ${secret.length}`);
+    console.log(`[Webhook] Using Secret (first 10 chars): ${secret.substring(0, 10)}...`);
 
-    const digest = crypto
-      .createHmac("sha256", secret)
-      .update(body) // No "utf8" here, use raw Buffer
-      .digest("base64");
+    // Strategy 1: Use secret exactly as provided
+    const digest1 = crypto.createHmac("sha256", secret).update(body).digest("base64");
 
-    if (digest !== hmacHeader) {
+    // Strategy 2: If secret starts with shpss_, try without the prefix
+    let digest2 = "";
+    if (secret.startsWith("shpss_")) {
+      const trimmedSecret = secret.replace("shpss_", "");
+      digest2 = crypto.createHmac("sha256", trimmedSecret).update(body).digest("base64");
+    }
+
+    const isValid = (digest1 === hmacHeader) || (digest2 !== "" && digest2 === hmacHeader);
+
+    if (!isValid) {
       console.error(`[Webhook] HMAC MISMATCH!`);
-      console.error(`[Webhook] Expected (calculated): ${digest}`);
-      console.error(`[Webhook] Received (from Shopify): ${hmacHeader}`);
+      console.error(`[Webhook] Calculated 1 (with prefix): ${digest1}`);
+      if (digest2) console.error(`[Webhook] Calculated 2 (no prefix): ${digest2}`);
+      console.error(`[Webhook] Received from Shopify: ${hmacHeader}`);
       return res
         .status(StatusCode.Unauthorized)
         .json(new ApiResponse(false, "HMAC validation failed"));
     }
+
+    console.log("[Webhook] HMAC Verified Successfully!");
+
     // Parse the webhook payload
     try {
-      const payload = JSON.parse(body.toString());
-      const topic = req.get("X-Shopify-Topic");
+      const payload = JSON.parse(bodyString);
       const shop = req.get("X-Shopify-Shop-Domain") || payload.myshopify_domain || payload.shop;
 
       console.log(`[Webhook] Topic: ${topic}, Shop: ${shop}`);
@@ -102,13 +112,10 @@ app.post(
       if (topic === "app/uninstalled") {
         if (shop) {
           console.log(`[Webhook] Handling uninstall for: ${shop}`);
-          // Set required API key header for uninstallCleanup to bypass internal auth
           req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-          // Mock req.body for uninstallCleanup since it expects { shop }
           (req as any).body = { shop };
-          // Call the cleanup controller
           await uninstallCleanup(req, res);
-          return; // uninstallCleanup sends the response
+          return;
         } else {
           console.error("[Webhook] Uninstall topic received but shop is missing");
         }
