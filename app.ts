@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import phoneRoutes from "./routes/phone.routes.js";
 import shopifyAuthRoutes from "./routes/shopify-auth.routes.js";
+import shopifyWebhookRoutes from "./routes/shopify-webhook.routes.js";
 
 import { connectDb } from "./config/db.js";
 import { errorHandler } from "./middlewares/error-handler.js";
@@ -178,6 +179,9 @@ app.use((req, res, next) => {
 
 // // Routes for phone
 app.use("/api/phone", phoneRoutes);
+
+// Shopify webhook routes
+app.use(shopifyWebhookRoutes);
 // Add Shopify App Proxy route for live frontend
 app.use("/apps/whatsapp-mern-app/phone", phoneRoutes);
 
