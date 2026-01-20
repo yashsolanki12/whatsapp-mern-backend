@@ -55,19 +55,28 @@ app.post(
   "/api/shopify/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    const topic = req.get("X-Shopify-Topic");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
+    const shopHeader = req.get("X-Shopify-Shop-Domain");
+
+    console.log(`[Webhook] Incoming Request - Topic: ${topic}, Shop: ${shopHeader}`);
+
     const secret = process.env.SHOPIFY_API_SECRET;
     if (!secret) {
+      console.error("[Webhook] SHOPIFY_API_SECRET is not configured on the server.");
       return res
         .status(StatusCode.Unauthorized)
-        .json(new ApiResponse(false, "Webhook HMAC validation failed"));
+        .json(new ApiResponse(false, "Server configuration error"));
     }
+
     const body = req.body;
     const digest = crypto
       .createHmac("sha256", secret)
-      .update(body, "utf8")
+      .update(body) // No "utf8" here, use raw Buffer
       .digest("base64");
+
     if (digest !== hmacHeader) {
+      console.error(`[Webhook] HMAC validation failed. Expected: ${digest.substring(0, 10)}..., Received: ${hmacHeader?.substring(0, 10)}...`);
       return res
         .status(StatusCode.Unauthorized)
         .json(new ApiResponse(false, "Webhook HMAC validation failed"));
