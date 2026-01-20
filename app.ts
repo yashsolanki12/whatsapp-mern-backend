@@ -12,6 +12,7 @@ import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
+import { uninstallCleanup } from "./controllers/phone.js";
 
 const app = express();
 
@@ -53,7 +54,7 @@ app.post(
 app.post(
   "/api/shopify/webhook",
   express.raw({ type: "application/json" }),
-  (req, res) => {
+  async (req, res) => {
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
     const secret = process.env.SHOPIFY_API_SECRET;
     if (!secret) {
@@ -72,18 +73,36 @@ app.post(
         .json(new ApiResponse(false, "Webhook HMAC validation failed"));
     }
     // Parse the webhook payload
-
     try {
-      JSON.parse(body.toString());
+      const payload = JSON.parse(body.toString());
+      const topic = req.get("X-Shopify-Topic");
+      const shop = req.get("X-Shopify-Shop-Domain") || payload.myshopify_domain || payload.shop;
+
+      console.log(`[Webhook] Topic: ${topic}, Shop: ${shop}`);
+
+      if (topic === "app/uninstalled") {
+        if (shop) {
+          console.log(`[Webhook] Handling uninstall for: ${shop}`);
+          // Set required API key header for uninstallCleanup to bypass internal auth
+          req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+          // Mock req.body for uninstallCleanup since it expects { shop }
+          (req as any).body = { shop };
+          // Call the cleanup controller
+          await uninstallCleanup(req, res);
+          return; // uninstallCleanup sends the response
+        } else {
+          console.error("[Webhook] Uninstall topic received but shop is missing");
+        }
+      }
     } catch (e) {
+      console.error("[Webhook] Error processing payload:", e);
       return res
         .status(StatusCode.BadRequest)
-        .json(new ApiResponse(false, "Invalid JSON"));
+        .json(new ApiResponse(false, "Invalid JSON or processing error"));
     }
     res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
   }
 );
-
 
 // Middleware
 app.use(cookieParser());
@@ -100,9 +119,9 @@ app.use(
       // @ts-ignore
       const reqMethod =
         typeof this !== "undefined" &&
-        this &&
-        (this as any).req &&
-        (this as any).req.method
+          this &&
+          (this as any).req &&
+          (this as any).req.method
           ? (this as any).req.method
           : undefined;
       if (isAllowedOrigin(origin, reqMethod)) {
@@ -113,7 +132,7 @@ app.use(
     },
     credentials: true,
     allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
-  })
+  }),
 );
 
 // Dynamic CORS middleware for dev and preview environments
@@ -133,22 +152,22 @@ app.use((req, res, next) => {
   const isAllowed = allowedOriginPatterns.some((pattern) =>
     typeof pattern === "string"
       ? pattern === origin
-      : pattern.test(origin || "")
+      : pattern.test(origin || ""),
   );
   if (isAllowed || !origin) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
     res.setHeader(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+      "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
     );
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With, X-Shopify-Access-Token, X-Shopify-Shop-Domain, X-Shopify-API-Version, X-Shopify-Hmac-SHA256, ngrok-skip-browser-warning"
+      "Content-Type, Authorization, X-Requested-With, X-Shopify-Access-Token, X-Shopify-Shop-Domain, X-Shopify-API-Version, X-Shopify-Hmac-SHA256, ngrok-skip-browser-warning",
     );
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
       "Access-Control-Expose-Headers",
-      "Content-Range, X-Total-Count"
+      "Content-Range, X-Total-Count",
     );
   }
   if (req.method === "OPTIONS") return res.status(204).end();
