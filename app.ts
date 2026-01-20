@@ -18,6 +18,12 @@ const app = express();
 
 dotenv.config({ path: [".env"] });
 
+// Global Logger to debug incoming requests
+app.use((req, _res, next) => {
+  console.log(`[Global Log] ${req.method} ${req.url}`);
+  next();
+});
+
 app.get("/", (_req, res) => {
   res.json({ message: "Server is running 🚀" });
 });
