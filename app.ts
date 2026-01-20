@@ -86,21 +86,22 @@ app.post(
     ];
 
     let verifiedSecret = null;
-    let lastDigest = "";
+    let finalCalculatedHmac = "";
 
-    for (const secret of secretsToTry) {
-      const digest = crypto.createHmac("sha256", secret).update(body).digest("base64");
-      lastDigest = digest;
+    for (const secretToTry of secretsToTry) {
+      const digest = crypto.createHmac("sha256", secretToTry).update(body).digest("base64");
       if (digest === hmacHeader) {
-        verifiedSecret = secret;
+        verifiedSecret = secretToTry;
         break;
       }
+      finalCalculatedHmac = digest;
     }
 
     if (!verifiedSecret) {
       console.error(`[Webhook] HMAC MISMATCH!`);
-      console.error(`[Webhook] Calculated example: ${lastDigest}`);
-      console.error(`[Webhook] Received from Shopify: ${hmacHeader}`);
+      console.error(`[Webhook] Secret used (start): ${primarySecret.substring(0, 15)}...`);
+      console.error(`[Webhook] Calculated HMAC: ${finalCalculatedHmac}`);
+      console.error(`[Webhook] Received HMAC:   ${hmacHeader}`);
       return res
         .status(StatusCode.Unauthorized)
         .json(new ApiResponse(false, "HMAC validation failed"));
@@ -114,6 +115,7 @@ app.post(
 
       if (topic === "app/uninstalled") {
         console.log(`[Webhook] Handling uninstall for: ${shop}`);
+        // Ensure we handle unauthorized calls securely
         req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
         req.body = { shop };
         await uninstallCleanup(req, res);
