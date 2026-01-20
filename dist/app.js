@@ -14,7 +14,7 @@ import { isAllowedOrigin } from "./utils/helper.js";
 import { uninstallCleanup } from "./controllers/phone.js";
 const app = express();
 dotenv.config({ path: [".env"] });
-// Global Logger to debug incoming requests
+// Global Logger
 app.use((req, _res, next) => {
     console.log(`[Global Log] ${req.method} ${req.url}`);
     next();
@@ -37,76 +37,71 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
             .status(StatusCode.Unauthorized)
             .json(new ApiResponse(false, "Webhook HMAC validation failed"));
     }
-    const body = req.body; // This is a Buffer, just like in /api/shopify/webhook
+    const body = req.body;
     const digest = crypto
         .createHmac("sha256", secret)
-        .update(body, "utf8")
+        .update(body)
         .digest("base64");
     res.json({ hmac: digest });
 });
-// Shopify Webhook Handler (direct route, no controller/router)
-app.post("/api/shopify/webhook", express.raw({ type: () => true }), // Capture everything regardless of Content-Type
+// Shopify Webhook Handler (Highly Resilient Version)
+app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), // Strictly capture for Shopify webhooks
 async (req, res) => {
     const topic = req.get("X-Shopify-Topic");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
     const shopHeader = req.get("X-Shopify-Shop-Domain");
     console.log(`[Webhook] Incoming Request - Topic: ${topic}, Shop: ${shopHeader}`);
-    const secret = process.env.SHOPIFY_API_SECRET?.trim();
-    if (!secret) {
-        console.error("[Webhook] SHOPIFY_API_SECRET is missing from environment variables!");
+    const primarySecret = process.env.SHOPIFY_API_SECRET?.trim();
+    if (!primarySecret) {
+        console.error("[Webhook] SHOPIFY_API_SECRET is missing!");
         return res.status(500).json({ success: false, message: "Configuration error" });
     }
     const body = req.body;
-    const bodyString = body.toString();
-    console.log(`[Webhook] Body length: ${body.length}, Body starts with: ${bodyString.substring(0, 50)}`);
-    console.log(`[Webhook] Using Secret (first 10 chars): ${secret.substring(0, 10)}...`);
-    // Strategy 1: Use secret exactly as provided
-    const digest1 = crypto.createHmac("sha256", secret).update(body).digest("base64");
-    // Strategy 2: If secret starts with shpss_, try without the prefix
-    let digest2 = "";
-    if (secret.startsWith("shpss_")) {
-        const trimmedSecret = secret.replace("shpss_", "");
-        digest2 = crypto.createHmac("sha256", trimmedSecret).update(body).digest("base64");
+    if (!body || body.length === 0) {
+        console.error("[Webhook] Body is empty!");
+        return res.status(400).json({ success: false, message: "Empty body" });
     }
-    const isValid = (digest1 === hmacHeader) || (digest2 !== "" && digest2 === hmacHeader);
-    if (!isValid) {
+    // Try multiple secret versions to be safe
+    const secretsToTry = [
+        primarySecret,
+        primarySecret.replace("shpss_", ""),
+    ];
+    let verifiedSecret = null;
+    let lastDigest = "";
+    for (const secret of secretsToTry) {
+        const digest = crypto.createHmac("sha256", secret).update(body).digest("base64");
+        lastDigest = digest;
+        if (digest === hmacHeader) {
+            verifiedSecret = secret;
+            break;
+        }
+    }
+    if (!verifiedSecret) {
         console.error(`[Webhook] HMAC MISMATCH!`);
-        console.error(`[Webhook] Calculated 1 (with prefix): ${digest1}`);
-        if (digest2)
-            console.error(`[Webhook] Calculated 2 (no prefix): ${digest2}`);
+        console.error(`[Webhook] Calculated example: ${lastDigest}`);
         console.error(`[Webhook] Received from Shopify: ${hmacHeader}`);
         return res
             .status(StatusCode.Unauthorized)
             .json(new ApiResponse(false, "HMAC validation failed"));
     }
-    console.log("[Webhook] HMAC Verified Successfully!");
-    // Parse the webhook payload
+    console.log("[Webhook] ✅ HMAC Verified Successfully!");
     try {
-        const payload = JSON.parse(bodyString);
-        const shop = req.get("X-Shopify-Shop-Domain") || payload.myshopify_domain || payload.shop;
-        console.log(`[Webhook] Topic: ${topic}, Shop: ${shop}`);
+        const payload = JSON.parse(body.toString());
+        const shop = shopHeader || payload.myshopify_domain || payload.shop;
         if (topic === "app/uninstalled") {
-            if (shop) {
-                console.log(`[Webhook] Handling uninstall for: ${shop}`);
-                req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-                req.body = { shop };
-                await uninstallCleanup(req, res);
-                return;
-            }
-            else {
-                console.error("[Webhook] Uninstall topic received but shop is missing");
-            }
+            console.log(`[Webhook] Handling uninstall for: ${shop}`);
+            req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+            req.body = { shop };
+            await uninstallCleanup(req, res);
+            return;
         }
     }
     catch (e) {
         console.error("[Webhook] Error processing payload:", e);
-        return res
-            .status(StatusCode.BadRequest)
-            .json(new ApiResponse(false, "Invalid JSON or processing error"));
     }
     res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
 });
-// Middleware
+// Standard Middleware (Applied AFTER webhook route to avoid interference)
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
