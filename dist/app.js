@@ -11,6 +11,7 @@ import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
+import { uninstallCleanup } from "./controllers/phone.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 app.get("/", (_req, res) => {
@@ -39,7 +40,7 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
     res.json({ hmac: digest });
 });
 // Shopify Webhook Handler (direct route, no controller/router)
-app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), async (req, res) => {
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
     const secret = process.env.SHOPIFY_API_SECRET;
     if (!secret) {
@@ -59,12 +60,31 @@ app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req
     }
     // Parse the webhook payload
     try {
-        JSON.parse(body.toString());
+        const payload = JSON.parse(body.toString());
+        const topic = req.get("X-Shopify-Topic");
+        const shop = req.get("X-Shopify-Shop-Domain") || payload.myshopify_domain || payload.shop;
+        console.log(`[Webhook] Topic: ${topic}, Shop: ${shop}`);
+        if (topic === "app/uninstalled") {
+            if (shop) {
+                console.log(`[Webhook] Handling uninstall for: ${shop}`);
+                // Set required API key header for uninstallCleanup to bypass internal auth
+                req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+                // Mock req.body for uninstallCleanup since it expects { shop }
+                req.body = { shop };
+                // Call the cleanup controller
+                await uninstallCleanup(req, res);
+                return; // uninstallCleanup sends the response
+            }
+            else {
+                console.error("[Webhook] Uninstall topic received but shop is missing");
+            }
+        }
     }
     catch (e) {
+        console.error("[Webhook] Error processing payload:", e);
         return res
             .status(StatusCode.BadRequest)
-            .json(new ApiResponse(false, "Invalid JSON"));
+            .json(new ApiResponse(false, "Invalid JSON or processing error"));
     }
     res.status(StatusCode.Ok).json(new ApiResponse(true, "Webhook received"));
 });

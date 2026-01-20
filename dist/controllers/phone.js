@@ -11,6 +11,7 @@ export const uninstallCleanup = async (req, res) => {
     try {
         const apiKey = req.headers["x-api-key"];
         if (apiKey !== process.env.BACKEND_API_KEY) {
+            console.warn("⚠️ Unauthorized uninstallCleanup attempt from IP:", req.ip);
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
         const { shop } = req.body;
