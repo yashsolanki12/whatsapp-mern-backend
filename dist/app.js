@@ -15,14 +15,21 @@ import { uninstallCleanup } from "./controllers/phone.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 function verifyShopifyWebhook(rawBody, hmacHeader) {
-    const secret = process.env.SHOPIFY_API_SECRET?.trim();
-    if (!secret || !hmacHeader)
+    if (!rawBody || !hmacHeader)
         return false;
-    const generatedHash = crypto
+    const secret = process.env.SHOPIFY_API_SECRET?.trim().replace(/^["']|["']$/g, "");
+    if (!secret)
+        return false;
+    const hash = crypto
         .createHmac("sha256", secret)
         .update(rawBody)
         .digest("base64");
-    return crypto.timingSafeEqual(Buffer.from(generatedHash, "utf8"), Buffer.from(hmacHeader, "utf8"));
+    try {
+        return crypto.timingSafeEqual(Buffer.from(hash, "utf8"), Buffer.from(hmacHeader, "utf8"));
+    }
+    catch {
+        return false;
+    }
 }
 // Global Logger
 app.use((req, _res, next) => {
@@ -122,23 +129,21 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
 // );
 app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) => {
     const topic = req.get("X-Shopify-Topic");
-    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
-    const shopHeader = req.get("X-Shopify-Shop-Domain");
+    const hmacHeader = req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
     if (!verifyShopifyWebhook(req.body, hmacHeader)) {
         console.error("[Webhook] ❌ HMAC validation failed");
-        return res.status(401).json({ success: false });
+        return res.status(401).send("Unauthorized");
     }
     console.log("[Webhook] ✅ HMAC verified");
     const payload = JSON.parse(req.body.toString());
-    const shop = shopHeader || payload.myshopify_domain || payload.shop;
+    const shop = req.get("X-Shopify-Shop-Domain") ||
+        payload.myshopify_domain ||
+        payload.shop;
     if (topic === "app/uninstalled") {
-        console.log(`[Webhook] App uninstalled: ${shop}`);
-        req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-        req.body = { shop };
-        await uninstallCleanup(req, res);
+        await uninstallCleanup({ body: { shop } }, res);
         return;
     }
-    res.status(200).json({ success: true });
+    res.status(200).send("OK");
 });
 // Standard Middleware (Applied AFTER webhook route to avoid interference)
 app.use(cookieParser());
