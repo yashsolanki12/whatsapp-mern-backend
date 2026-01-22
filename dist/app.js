@@ -134,21 +134,12 @@ app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) 
     const topic = req.get("X-Shopify-Topic");
     const shop = req.get("X-Shopify-Shop-Domain");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
-    // const isValid = verifyShopifyWebhook(req.body, hmacHeader);
-    // if (!isValid) {
-    //   console.error("[Webhook] ❌ HMAC validation failed");
-    //   return res.status(401).send("Unauthorized");
-    // }
-    console.log("[Webhook] ✅ HMAC verified");
     const rawBody = req.body;
     console.log("────────── WEBHOOK DEBUG ──────────");
     console.log("Topic:", topic);
     console.log("Shop:", shop);
     console.log("Header HMAC exists:", Boolean(hmacHeader));
-    console.log("Raw body type:", rawBody?.constructor?.name);
-    console.log("Raw body length:", rawBody?.length);
     const secret = process.env.SHOPIFY_API_SECRET?.trim().replace(/^["']|["']$/g, "");
-    console.log("Secret exists:", Boolean(secret), "Prefix:", secret?.slice(0, 6), "Length:", secret?.length);
     if (!secret || !hmacHeader || !rawBody) {
         console.error("❌ Missing critical data");
         return res.status(401).send("Missing data");
@@ -157,28 +148,29 @@ app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) 
         .createHmac("sha256", secret)
         .update(rawBody)
         .digest("base64");
-    console.log("Generated HMAC:", generatedHmac);
-    console.log("Received  HMAC:", hmacHeader);
-    console.log("HMAC match:", generatedHmac === hmacHeader);
-    try {
-        const timingMatch = crypto.timingSafeEqual(Buffer.from(generatedHmac), Buffer.from(hmacHeader));
-        console.log("TimingSafeEqual:", timingMatch);
-    }
-    catch (e) {
-        console.error("TimingSafeEqual error:", e.message);
-    }
-    console.log("──────── END WEBHOOK DEBUG ────────");
     if (generatedHmac !== hmacHeader) {
+        console.error("❌ HMAC mismatch");
+        console.log("Generated:", generatedHmac);
+        console.log("Received:", hmacHeader);
         return res.status(401).send("HMAC mismatch");
     }
-    // ---- IF VERIFIED ----
-    const payload = JSON.parse(rawBody.toString());
-    if (topic === "app/uninstalled") {
-        await uninstallCleanup({ body: { shop } }, res);
-        return;
+    console.log("✅ HMAC verified");
+    try {
+        const payload = JSON.parse(rawBody.toString());
+        if (topic === "app/uninstalled") {
+            console.log(`[Webhook] Processing uninstall for: ${shop}`);
+            // Ensure the internal API key is present for the cleanup controller
+            req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+            req.body = { shop };
+            await uninstallCleanup(req, res);
+            return;
+        }
+        if (payload) {
+            console.log("Payload:", payload);
+        }
     }
-    if (payload) {
-        console.log("Payload:", payload);
+    catch (e) {
+        console.error("[Webhook] Parse error:", e.message);
     }
     res.status(200).send("OK");
 });
