@@ -82,7 +82,7 @@ export const getCurrentShopifySessionId = async (req, res) => {
 // Create
 export const createNewWhatsAppPhone = async (req, res) => {
     try {
-        const { phone_number, country_code, shopify_session_id } = req.body;
+        const { phone_number, country_code, shopify_session_id, message, position, button_style, custom_icon } = req.body;
         if (!phone_number || !country_code || !shopify_session_id) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -98,6 +98,10 @@ export const createNewWhatsAppPhone = async (req, res) => {
             phone_number,
             country_code,
             shopify_session_id,
+            message,
+            position,
+            button_style,
+            custom_icon,
         });
         if (!newPhone) {
             return res
@@ -164,7 +168,7 @@ export const getAllWhatsAppPhone = async (_req, res) => {
 export const updateWhatsAppPhoneById = async (req, res) => {
     try {
         const { id } = req.params;
-        const { phone_number, country_code } = req.body;
+        const { phone_number, country_code, message, position, button_style, custom_icon } = req.body;
         if (!phone_number || !country_code) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -178,6 +182,10 @@ export const updateWhatsAppPhoneById = async (req, res) => {
         const updatedPhone = await phoneService.updatePhone(id, {
             phone_number,
             country_code,
+            message,
+            position,
+            button_style,
+            custom_icon,
         });
         if (!updatedPhone) {
             return res
