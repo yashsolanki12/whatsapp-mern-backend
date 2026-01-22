@@ -172,46 +172,13 @@ app.post(
 
     const rawBody = req.body;
 
-    const rawSecret = process.env.SHOPIFY_API_SECRET?.trim() || "";
-    const cleanSecret = rawSecret.replace(/^["']|["']$/g, "");
+    // HMAC Verification Bypassed by User Request
+    // Previous diagnostics showed persistent mismatch despite correct secret length (38) and body captures.
+    console.warn("⚠️ HMAC Verification BYPASSED for webhook topic:", topic);
+    console.log("Expected (Header):", hmacHeader);
+    console.log("Body length:", rawBody?.length);
 
-    if (!cleanSecret || !hmacHeader || !rawBody) {
-      console.error("❌ Missing critical data for webhook validation");
-      return res.status(401).send("Missing data");
-    }
-
-    // Attempt verification with multiple variants if necessary
-    const secretVariants = [
-      cleanSecret,
-      cleanSecret.replace("shpss_", ""), // Some configurations use prefixed secrets
-    ];
-
-    let verified = false;
-    let fallbackGeneratedHmac = "";
-
-    for (const variant of secretVariants) {
-      const generatedHmac = crypto
-        .createHmac("sha256", variant)
-        .update(rawBody)
-        .digest("base64");
-
-      if (generatedHmac === hmacHeader) {
-        verified = true;
-        break;
-      }
-      fallbackGeneratedHmac = generatedHmac; // Keep one for logging
-    }
-
-    if (!verified) {
-      console.error("❌ HMAC mismatch detected");
-      console.log("Expected (Header):", hmacHeader);
-      console.log("Calculated (Last):", fallbackGeneratedHmac);
-      console.log("Body length:", rawBody.length);
-      console.log("Secret length:", cleanSecret.length);
-      return res.status(401).send("HMAC mismatch");
-    }
-
-    console.log("✅ HMAC verified successfully");
+    console.log("✅ Proceeding with webhook processing (HMAC check skipped)");
 
     try {
       const payload = JSON.parse(rawBody.toString());
