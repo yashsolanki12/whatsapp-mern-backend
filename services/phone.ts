@@ -7,13 +7,17 @@ import { IWhatsAppPhone } from "../types/phone.types.js";
 export const createPhone = async (
   data: Pick<
     IWhatsAppPhone,
-    "phone_number" | "country_code" | "shopify_session_id"
+    "phone_number" | "country_code" | "shopify_session_id" | "message" | "position" | "button_style" | "custom_icon"
   >
 ): Promise<IWhatsAppPhone> => {
   return await PhoneModel.create({
     phone_number: data.phone_number,
     country_code: data.country_code,
     shopify_session_id: data.shopify_session_id,
+    message: data.message,
+    position: data.position,
+    button_style: data.button_style,
+    custom_icon: data.custom_icon,
   });
 };
 
@@ -42,7 +46,7 @@ export const getPhoneById = async (
 // Update phone by id
 export const updatePhone = async (
   id: string,
-  data: Pick<IWhatsAppPhone, "phone_number" | "country_code">
+  data: Partial<Pick<IWhatsAppPhone, "phone_number" | "country_code" | "message" | "position" | "button_style" | "custom_icon">>
 ): Promise<IWhatsAppPhone | null> => {
   return await PhoneModel.findByIdAndUpdate(id, data, { new: true });
 };

@@ -7,6 +7,10 @@ export const createPhone = async (data) => {
         phone_number: data.phone_number,
         country_code: data.country_code,
         shopify_session_id: data.shopify_session_id,
+        message: data.message,
+        position: data.position,
+        button_style: data.button_style,
+        custom_icon: data.custom_icon,
     });
 };
 export const getAllPhone = async (filter = {}) => {
