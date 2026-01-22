@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: [".env"] });
 
-// Uninstall cleanup: delete session and all related phone/settings for a shop
+// Uninstall cleanup: set accessToken to null for a shop instead of deleting records
 export const uninstallCleanup = async (req: Request, res: Response) => {
   try {
     const apiKey = req.headers["x-api-key"];
@@ -25,25 +25,29 @@ export const uninstallCleanup = async (req: Request, res: Response) => {
         .status(StatusCode.BAD_REQUEST)
         .json(new ApiResponse(false, "Missing shop domain."));
     }
+
     // Find the session for this shop
     const sessionDoc = await mongoose.connection
       .collection("shopify_sessions")
       .findOne({ shop });
-    if (!sessionDoc || !sessionDoc._id) {
-      // Session already deleted, nothing to do
+
+    if (!sessionDoc) {
+      console.log(`[uninstallCleanup] No session found for shop: ${shop}`);
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Session already deleted."));
+        .json(new ApiResponse(true, "No session to update."));
     }
-    // Delete all phone/settings linked to this session
-    await PhoneModel.deleteMany({ shopify_session_id: sessionDoc._id });
-    // Delete the session itself
+
+    // Update only the accessToken to null to persist other data
     await mongoose.connection
       .collection("shopify_sessions")
-      .deleteOne({ shop });
+      .updateOne({ shop }, { $set: { accessToken: null } });
+
+    console.log(`[uninstallCleanup] Access token nulled for shop: ${shop}`);
+
     return res
       .status(StatusCode.OK)
-      .json(new ApiResponse(true, "Session and related data deleted."));
+      .json(new ApiResponse(true, "Session access token preserved as null."));
   } catch (error) {
     console.error("❌ Error in uninstallCleanup:", error);
     return res
