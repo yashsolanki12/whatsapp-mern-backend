@@ -135,26 +135,39 @@ app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) 
     const shop = req.get("X-Shopify-Shop-Domain");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
     const rawBody = req.body;
-    console.log("────────── WEBHOOK DEBUG ──────────");
-    console.log("Topic:", topic);
-    console.log("Shop:", shop);
-    console.log("Header HMAC exists:", Boolean(hmacHeader));
-    const secret = process.env.SHOPIFY_API_SECRET?.trim().replace(/^["']|["']$/g, "");
-    if (!secret || !hmacHeader || !rawBody) {
-        console.error("❌ Missing critical data");
+    const rawSecret = process.env.SHOPIFY_API_SECRET?.trim() || "";
+    const cleanSecret = rawSecret.replace(/^["']|["']$/g, "");
+    if (!cleanSecret || !hmacHeader || !rawBody) {
+        console.error("❌ Missing critical data for webhook validation");
         return res.status(401).send("Missing data");
     }
-    const generatedHmac = crypto
-        .createHmac("sha256", secret)
-        .update(rawBody)
-        .digest("base64");
-    if (generatedHmac !== hmacHeader) {
-        console.error("❌ HMAC mismatch");
-        console.log("Generated:", generatedHmac);
-        console.log("Received:", hmacHeader);
+    // Attempt verification with multiple variants if necessary
+    const secretVariants = [
+        cleanSecret,
+        cleanSecret.replace("shpss_", ""), // Some configurations use prefixed secrets
+    ];
+    let verified = false;
+    let fallbackGeneratedHmac = "";
+    for (const variant of secretVariants) {
+        const generatedHmac = crypto
+            .createHmac("sha256", variant)
+            .update(rawBody)
+            .digest("base64");
+        if (generatedHmac === hmacHeader) {
+            verified = true;
+            break;
+        }
+        fallbackGeneratedHmac = generatedHmac; // Keep one for logging
+    }
+    if (!verified) {
+        console.error("❌ HMAC mismatch detected");
+        console.log("Expected (Header):", hmacHeader);
+        console.log("Calculated (Last):", fallbackGeneratedHmac);
+        console.log("Body length:", rawBody.length);
+        console.log("Secret length:", cleanSecret.length);
         return res.status(401).send("HMAC mismatch");
     }
-    console.log("✅ HMAC verified");
+    console.log("✅ HMAC verified successfully");
     try {
         const payload = JSON.parse(rawBody.toString());
         if (topic === "app/uninstalled") {
