@@ -7,10 +7,11 @@ export function isAllowedOrigin(origin, reqMethod) {
     if (reqMethod && reqMethod.toUpperCase() === "OPTIONS")
         return true;
     // Define only specific trusted domains
-    const allowedOrigins = [
-        "https://whatsup.ecodesoft.net",
-    ];
+    const allowedOrigins = ["https://whatsup.ecodesoft.net"];
     if (allowedOrigins.includes(origin))
+        return true;
+    // Backend url
+    if (/^https?:\/\/([\w.-]+)\.ecodesoft\.net$/.test(origin))
         return true;
     // Shopify-specific domain patterns
     if (/https?:\/\/([\w.-]+)\.myshopify\.com$/.test(origin))
