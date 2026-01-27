@@ -6,7 +6,10 @@ export function isAllowedOrigin(origin?: string, reqMethod?: string): boolean {
   if (reqMethod && reqMethod.toUpperCase() === "OPTIONS") return true;
 
   // Define only specific trusted domains
-  const allowedOrigins = ["https://whatsup.ecodesoft.net"];
+  const allowedOrigins = [
+    "http://ecswhatsup.ecodesoft.net",
+    "https://ecswhatsup-backend.ecodesoft.net",
+  ];
 
   if (allowedOrigins.includes(origin)) return true;
 
