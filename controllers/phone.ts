@@ -10,6 +10,36 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: [".env"] });
 
+// This function runs in the background and only needs the 'shop' domain.
+export const uninstallCleanupBackground = async (shop: string) => {
+  try {
+    // No apiKey check needed here as it's an internal background process.
+    if (!shop) {
+      console.warn("[uninstallCleanupBackground] Missing shop domain.");
+      return;
+    }
+
+    // Perform your database operations:
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop });
+
+    if (!sessionDoc) {
+      console.log(`[uninstallCleanupBackground] No session found for shop: ${shop}`);
+      return;
+    }
+
+    await mongoose.connection
+      .collection("shopify_sessions")
+      .updateOne({ shop }, { $set: { accessToken: null } });
+
+    console.log(`[uninstallCleanupBackground] Access token nulled for shop: ${shop}`);
+
+  } catch (error) {
+    console.error("❌ Error in uninstallCleanupBackground:", error);
+  }
+};
+
 // Uninstall cleanup: set accessToken to null for a shop instead of deleting records
 export const uninstallCleanup = async (req: Request, res: Response) => {
   try {
