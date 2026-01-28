@@ -11,7 +11,7 @@ import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
-import { uninstallCleanup } from "./controllers/phone.js";
+import { uninstallCleanupBackground } from "./controllers/phone.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 // Global Logger
@@ -45,6 +45,7 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
     res.json({ hmac: digest });
 });
 app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) => {
+    res.status(StatusCode.Ok).send("OK");
     const topic = req.get("X-Shopify-Topic");
     const shop = req.get("X-Shopify-Shop-Domain");
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
@@ -60,10 +61,11 @@ app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) 
         if (topic === "app/uninstalled") {
             console.log(`[Webhook] Processing uninstall for: ${shop}`);
             // Ensure the internal API key is present for the cleanup controller
-            req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-            req.body = { shop };
-            await uninstallCleanup(req, res);
-            return;
+            process.nextTick(() => uninstallCleanupBackground(shop));
+            // req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+            // req.body = { shop };
+            // await uninstallCleanup(req, res);
+            // return;
         }
         if (payload) {
             console.log("Payload:", payload);
@@ -72,7 +74,7 @@ app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) 
     catch (e) {
         console.error("[Webhook] Parse error:", e.message);
     }
-    res.status(200).send("OK");
+    // res.status(200).send("OK");
 });
 // Standard Middleware (Applied AFTER webhook route to avoid interference)
 app.use(cookieParser());

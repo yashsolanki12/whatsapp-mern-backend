@@ -4,7 +4,8 @@ export const phoneSchema = z.object({
         phone_number: z
             .string()
             .min(1, { message: "Phone number is required." })
-            .max(15, { message: "Phone number must be less than 15 characters." }),
+            .max(15, { message: "Phone number must be less than 15 characters." })
+            .regex(/^\d+$/, { message: "Only digits are allowed in phone number" }),
         country_code: z
             .string()
             .min(1, { message: "Country code is required." })

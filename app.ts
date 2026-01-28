@@ -12,7 +12,7 @@ import { errorHandler } from "./middlewares/error-handler.js";
 import { ApiResponse } from "./utils/api-response.js";
 import { StatusCode } from "@shopify/shopify-api";
 import { isAllowedOrigin } from "./utils/helper.js";
-import { uninstallCleanup } from "./controllers/phone.js";
+import { uninstallCleanupBackground } from "./controllers/phone.js";
 
 const app = express();
 
@@ -60,6 +60,8 @@ app.post(
   "/api/shopify/webhook",
   express.raw({ type: "*/*" }),
   async (req: any, res) => {
+    res.status(StatusCode.Ok).send("OK");
+
     const topic = req.get("X-Shopify-Topic");
     const shop = req.get("X-Shopify-Shop-Domain");
     const hmacHeader =
@@ -81,10 +83,11 @@ app.post(
       if (topic === "app/uninstalled") {
         console.log(`[Webhook] Processing uninstall for: ${shop}`);
         // Ensure the internal API key is present for the cleanup controller
-        req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-        req.body = { shop };
-        await uninstallCleanup(req, res);
-        return;
+        process.nextTick(() => uninstallCleanupBackground(shop));
+        // req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+        // req.body = { shop };
+        // await uninstallCleanup(req, res);
+        // return;
       }
 
       if (payload) {
@@ -94,7 +97,7 @@ app.post(
       console.error("[Webhook] Parse error:", e.message);
     }
 
-    res.status(200).send("OK");
+    // res.status(200).send("OK");
   },
 );
 
@@ -113,9 +116,9 @@ app.use(
       // @ts-ignore
       const reqMethod =
         typeof this !== "undefined" &&
-          this &&
-          (this as any).req &&
-          (this as any).req.method
+        this &&
+        (this as any).req &&
+        (this as any).req.method
           ? (this as any).req.method
           : undefined;
       if (isAllowedOrigin(origin, reqMethod)) {
