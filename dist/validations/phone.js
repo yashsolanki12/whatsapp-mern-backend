@@ -9,8 +9,8 @@ export const phoneSchema = z.object({
         country_code: z
             .string()
             .min(1, { message: "Country code is required." })
-            .regex(/^\+\d{1,4}$/, {
-            message: "Please enter a valid country code starting with '+' followed by 1 to 4 digits (e.g., +1 or +44).",
+            .regex(/^\+\d{1,5}/, {
+            message: "Please enter a valid country code starting with '+' followed by 1 to 5 digits (e.g., +1 or +91).",
         }),
         shopify_session_id: z.string().optional(),
     }),
