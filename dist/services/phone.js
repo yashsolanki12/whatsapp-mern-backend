@@ -11,6 +11,7 @@ export const createPhone = async (data) => {
         position: data.position,
         button_style: data.button_style,
         custom_icon: data.custom_icon,
+        page_display: data.page_display,
     });
 };
 export const getAllPhone = async (filter = {}) => {
