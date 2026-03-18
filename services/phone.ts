@@ -7,8 +7,15 @@ import { IWhatsAppPhone } from "../types/phone.types.js";
 export const createPhone = async (
   data: Pick<
     IWhatsAppPhone,
-    "phone_number" | "country_code" | "shopify_session_id" | "message" | "position" | "button_style" | "custom_icon"
-  >
+    | "phone_number"
+    | "country_code"
+    | "shopify_session_id"
+    | "message"
+    | "position"
+    | "button_style"
+    | "custom_icon"
+    | "page_display"
+  >,
 ): Promise<IWhatsAppPhone> => {
   return await PhoneModel.create({
     phone_number: data.phone_number,
@@ -18,19 +25,18 @@ export const createPhone = async (
     position: data.position,
     button_style: data.button_style,
     custom_icon: data.custom_icon,
+    page_display: data.page_display,
   });
 };
 
-
-
 export const getAllPhone = async (
-  filter: Partial<IWhatsAppPhone> = {}
+  filter: Partial<IWhatsAppPhone> = {},
 ): Promise<IWhatsAppPhone[]> => {
   // Prepare a filter that matches the schema types
   const mongoFilter: any = { ...filter };
   if (mongoFilter.shopify_session_id) {
     mongoFilter.shopify_session_id = new mongoose.Types.ObjectId(
-      mongoFilter.shopify_session_id as any
+      mongoFilter.shopify_session_id as any,
     );
   }
   return await PhoneModel.find(mongoFilter).sort({ createdAt: -1 });
@@ -38,7 +44,7 @@ export const getAllPhone = async (
 
 // Get phone by id
 export const getPhoneById = async (
-  id: string
+  id: string,
 ): Promise<IWhatsAppPhone | null> => {
   return await PhoneModel.findById(id);
 };
@@ -46,14 +52,25 @@ export const getPhoneById = async (
 // Update phone by id
 export const updatePhone = async (
   id: string,
-  data: Partial<Pick<IWhatsAppPhone, "phone_number" | "country_code" | "message" | "position" | "button_style" | "custom_icon">>
+  data: Partial<
+    Pick<
+      IWhatsAppPhone,
+      | "phone_number"
+      | "country_code"
+      | "message"
+      | "position"
+      | "button_style"
+      | "custom_icon"
+      | "page_display"
+    >
+  >,
 ): Promise<IWhatsAppPhone | null> => {
   return await PhoneModel.findByIdAndUpdate(id, data, { new: true });
 };
 
 // Delete phone by id
 export const deletePhoneById = async (
-  id: string
+  id: string,
 ): Promise<IWhatsAppPhone | null> => {
   return await PhoneModel.findByIdAndDelete(id);
 };
