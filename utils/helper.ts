@@ -25,5 +25,10 @@ export function isAllowedOrigin(origin?: string, reqMethod?: string): boolean {
   if (/^http:\/\/localhost:\d+$/.test(origin)) return true;
   if (/.*\.trycloudflare\.com$/.test(origin)) return true;
 
+  // Allow ALL Shopify store custom domains (including web pixels, themes, apps)
+  // This handles: healthyhub.ca, mystore.com, etc. for Shopify stores
+  // Pattern: matches any HTTPS domain that could be a Shopify store
+  if (/^https:\/\/[\w.-]+$/.test(origin)) return true;
+
   return false;
 }
