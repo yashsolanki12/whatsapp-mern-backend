@@ -9,7 +9,7 @@ const phoneSchema = new Schema<IWhatsAppPhone>(
     position: { type: String, default: "right" },
     button_style: { type: String, default: "icon_only" },
     custom_icon: { type: String, default: "whatsapp" },
-    page_display: { type: String, default: "all" },
+    page_display: { type: [String], default: ["all"] },
     shopify_session_id: {
       type: Schema.Types.ObjectId,
       ref: "ShopifySession",
