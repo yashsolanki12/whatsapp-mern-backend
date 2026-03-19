@@ -7,6 +7,6 @@ export interface IWhatsAppPhone extends Document {
   position?: string;
   button_style?: string;
   custom_icon?: string;
-  page_display?: string;
+  page_display?: string[];
   shopify_session_id?: Types.ObjectId; // FK reference
 }
