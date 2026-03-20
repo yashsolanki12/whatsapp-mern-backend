@@ -74,13 +74,15 @@ export const uninstallCleanup = async (req, res) => {
 // Get current shopify_session_id for frontend
 export const getCurrentShopifySessionId = async (req, res) => {
     try {
-        const shopDomain = req.headers["x-shopify-shop-domain"];
+        // Get shop domain from query parameter or header
+        const shopDomain = req.query.shop ||
+            req.headers["x-shopify-shop-domain"];
         console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
         if (!shopDomain) {
-            console.log("❌ Missing shop domain header in session request");
+            console.log("❌ Missing shop domain in session request");
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Missing shop domain header."));
+                .json(new ApiResponse(false, "Missing shop domain."));
         }
         const sessionDoc = await mongoose.connection
             .collection("shopify_sessions")
@@ -145,16 +147,17 @@ export const createNewWhatsAppPhone = async (req, res) => {
     }
 };
 // List
-export const getAllWhatsAppPhone = async (_req, res) => {
+export const getAllWhatsAppPhone = async (req, res) => {
     try {
-        // Get shop domain from header
-        const shopDomain = res.req.headers["x-shopify-shop-domain"];
+        // Get shop domain from query parameter or header
+        const shopDomain = req.query.shop ||
+            res.req.headers["x-shopify-shop-domain"];
         console.log("📱 getAllWhatsAppPhone - Shop domain:", shopDomain);
         if (!shopDomain) {
-            console.log("❌ Missing shop domain header");
+            console.log("❌ Missing shop domain");
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Missing shop domain header."));
+                .json(new ApiResponse(false, "Missing shop domain."));
         }
         // Find the session for this shop
         const sessionDoc = await mongoose.connection
