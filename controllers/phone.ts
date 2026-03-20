@@ -25,7 +25,9 @@ export const uninstallCleanupBackground = async (shop: string) => {
       .findOne({ shop });
 
     if (!sessionDoc) {
-      console.log(`[uninstallCleanupBackground] No session found for shop: ${shop}`);
+      console.log(
+        `[uninstallCleanupBackground] No session found for shop: ${shop}`,
+      );
       return;
     }
 
@@ -33,8 +35,9 @@ export const uninstallCleanupBackground = async (shop: string) => {
       .collection("shopify_sessions")
       .updateOne({ shop }, { $set: { accessToken: null } });
 
-    console.log(`[uninstallCleanupBackground] Access token nulled for shop: ${shop}`);
-
+    console.log(
+      `[uninstallCleanupBackground] Access token nulled for shop: ${shop}`,
+    );
   } catch (error) {
     console.error("❌ Error in uninstallCleanupBackground:", error);
   }
@@ -92,14 +95,17 @@ export const getCurrentShopifySessionId = async (
   res: Response,
 ) => {
   try {
-    const shopDomain = req.headers["x-shopify-shop-domain"] as string;
+    // Get shop domain from query parameter or header
+    const shopDomain =
+      (req.query.shop as string) ||
+      (req.headers["x-shopify-shop-domain"] as string);
     console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
 
     if (!shopDomain) {
-      console.log("❌ Missing shop domain header in session request");
+      console.log("❌ Missing shop domain in session request");
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header."));
+        .json(new ApiResponse(false, "Missing shop domain."));
     }
 
     const sessionDoc = await mongoose.connection
@@ -186,17 +192,19 @@ export const createNewWhatsAppPhone = async (req: Request, res: Response) => {
 };
 
 // List
-export const getAllWhatsAppPhone = async (_req: Request, res: Response) => {
+export const getAllWhatsAppPhone = async (req: Request, res: Response) => {
   try {
-    // Get shop domain from header
-    const shopDomain = res.req.headers["x-shopify-shop-domain"] as string;
+    // Get shop domain from query parameter or header
+    const shopDomain =
+      (req.query.shop as string) ||
+      (res.req.headers["x-shopify-shop-domain"] as string);
     console.log("📱 getAllWhatsAppPhone - Shop domain:", shopDomain);
 
     if (!shopDomain) {
-      console.log("❌ Missing shop domain header");
+      console.log("❌ Missing shop domain");
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header."));
+        .json(new ApiResponse(false, "Missing shop domain."));
     }
 
     // Find the session for this shop
